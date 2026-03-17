@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Record Purchase Request - ICTU Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body" onload="loadUser()">
+
+    <header class="dash-header">
+        <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
+        <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
+        <div class="header-divider"></div>
+        <div class="header-titles">
+            <h2>Department of Education - NCR</h2>
+            <h3>ICTU Monitoring Supplies</h3>
+        </div>
+    </header>
+
+    <div class="red-bar">
+        <div class="hamburger" onclick="toggleSidebar()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-user">
+            <div class="user-icon">👤</div>
+            <span id="displaySidebarName">[Name of the User]</span>
+        </div>
+        
+        <a href="item.html" class="nav-item">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">Record Item<br>Receipt</span>
+        </a>
+        
+        <a href="purchase.html" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span class="nav-text">Record Purchase<br>Receipt</span>
+        </a>
+        
+        <a href="monitor.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Monitoring Item<br>Status</span>
+        </a>
+        
+        <button class="logout-btn" onclick="logout()">LOG OUT</button>
+    </nav>
+
+    <main class="form-main">
+        <div class="gray-box">
+            <h2>RECORD PURCHASE REQUEST</h2>
+            
+            <div class="form-row">
+                <label>PR NUMBER:</label>
+                <input type="number" id="prnumber" class="short-input">
+            </div>
+            
+            <div class="form-row">
+                <label>PR DATE:</label>
+                <input type="date" id="prdate" class="short-input">
+            </div>
+            
+            <div class="form-row">
+                <label>ITEM NAME:</label>
+                <input type="text" id="itemname" class="short-input">
+            </div>
+            
+            <div class="form-row">
+                <label>QUANTITY:</label>
+                <input type="number" id="quantity" class="short-input">
+            </div>
+            
+            <div class="form-row">
+                <label>DESCRIPTION:</label>
+                <input type="text" id="description" class="long-input">
+            </div>
+
+            <button class="enter-btn" onclick="alert('Purchase Request Saved!')">Enter</button>
+        </div>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+</html>

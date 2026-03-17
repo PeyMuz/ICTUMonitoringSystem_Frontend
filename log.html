@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Log In - Monitoring System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="log">
+            <h2>LOG IN</h2>
+            <label>username:</label>
+            <input type="text" id="loginUser">
+            <label>password:</label>
+            <input type="password" id="loginPass">
+            
+            <button onclick="login()">Enter</button>
+            <p>No account? Sign up here: <a href="#" onclick="showSignup(); return false;">Click here</a></p>
+        </div>
+
+        <div id="sign" style="display:none;">
+            <h2>SIGN UP</h2>
+            <label>Full Name:</label>
+            <input type="text" id="signName">
+            <label>Username:</label>
+            <input type="text" id="signUser">
+            <label>Position:</label>
+            <input type="text" id="signPosition">
+            <label>Password:</label>
+            <input type="password" id="signPass">
+            <label>Confirm password:</label>
+            <input type="password" id="signConfirm">
+            
+            <button onclick="signup()">Enter</button>
+            <p>Already have an account?: <a href="#" onclick="showLogin(); return false;">Log in Here</a></p>
+        </div>
+    </div>
+
+    <div class="logo-container">
+        <img src="Deeep.png" alt="DepEd Logo" class="bottom-logo">
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

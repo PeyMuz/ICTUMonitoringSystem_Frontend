@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Monitor Items - ICTU</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-body" onload="loadUser(); loadRecords();">
+
+    <header class="dash-header">
+        <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
+        <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
+        <div class="header-divider"></div>
+        <div class="header-titles">
+            <h2>Department of Education - NCR</h2>
+            <h3>ICTU Monitoring Supplies</h3>
+        </div>
+    </header>
+
+    <div class="red-bar">
+        <div class="hamburger" onclick="toggleSidebar()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-user">
+            <i class="fa-solid fa-circle-user user-icon"></i>
+            <span id="displaySidebarName">[Name of the User]</span>
+        </div>
+        
+        <a href="item.html" class="nav-item">
+            <i class="fa-solid fa-file-signature nav-icon"></i>
+            <span class="nav-text">Record Item<br>Receipt</span>
+        </a>
+        
+        <a href="purchase.html" class="nav-item">
+            <i class="fa-solid fa-hand-holding-dollar nav-icon"></i>
+            <span class="nav-text">Record Purchase<br>Receipt</span>
+        </a>
+        
+        <a href="monitor.html" class="nav-item">
+            <i class="fa-solid fa-magnifying-glass-chart nav-icon"></i>
+            <span class="nav-text">Monitoring Item<br>Status</span>
+        </a>
+        
+        <button class="logout-btn" onclick="logout()">LOG OUT</button>
+    </nav>
+
+    <main class="form-main">
+        <div class="gray-box monitor-box">
+            <h2>MONITORING ITEM STATUS</h2>
+
+            <select id="status" class="status-dropdown">
+                <option>Working</option>
+                <option>Missing</option>
+                <option>Concerned</option>
+                <option>Returned</option>
+            </select>
+
+            <div class="monitor-row">
+                <label>PR NUMBER:</label>
+                <input type="number" id="monPr">
+            </div>
+            
+            <div class="monitor-row">
+                <label>ITEM NAME:</label>
+                <input type="text" id="monItem">
+            </div>
+
+            <div class="monitor-row">
+                <label>DATE STATUS CHECKED:</label>
+                <input type="date" id="datechecked">
+            </div>
+
+            <div class="table-container">
+                <table id="recordTable">
+                    <thead>
+                        <tr>
+                            <th>PR Number</th>
+                            <th>Item Name</th>
+                            <th>Status</th>
+                            <th>Date Checked</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordBody">
+                        </tbody>
+                </table>
+            </div>
+
+            <button class="enter-btn" onclick="addRecord()">Save</button>
+        </div>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Dashboard - ICTU Monitoring</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="loadUser()" class="dashboard-body">
+
+    <header class="dash-header">
+        <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
+        <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
+        
+        <div class="header-divider"></div>
+        
+        <div class="header-titles">
+            <h2>Department of Education - NCR</h2>
+            <h3>ICTU Monitoring Supplies</h3>
+        </div>
+    </header>
+
+    <div class="red-bar">
+        <div class="hamburger" onclick="toggleSidebar()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-user">
+            <div class="user-icon">👤</div>
+            <span id="displaySidebarName">[Name of the User]</span>
+        </div>
+        
+        <a href="item.html" class="nav-item">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">Record Item<br>Receipt</span>
+        </a>
+        
+        <a href="purchase.html" class="nav-item">
+            <span class="nav-icon">💸</span>
+            <span class="nav-text">Record Purchase<br>Receipt</span>
+        </a>
+        
+        <a href="monitor.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Monitoring Item<br>Status</span>
+        </a>
+        
+        <button class="logout-btn" onclick="logout()">LOG OUT</button>
+    </nav>
+
+    <main class="welcome-content">
+        <h1>WELCOME!</h1>
+        <br><br>
+        <h2 id="displayFullName">[FULL NAME OF USER]</h2>
+        <br><br>
+        <h3 id="displayPosition">[POSITION]</h3>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+</html>
