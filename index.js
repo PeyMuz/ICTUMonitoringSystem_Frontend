@@ -114,6 +114,7 @@ function loaduser () { //to load the file of inside.html
     if (positionEl) positionEl.innerText = activeUser.position;
     if (sidebarNameEl) sidebarNameEl.innerText = activeUser.name;
 
+    // Random comment goes here
 }
 
 //for monitor.html
