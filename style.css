@@ -1,566 +1,1344 @@
 * {
+
     box-sizing: border-box;
+
     margin: 0;
+
     padding: 0;
+
 }
 
-/* For landing page*/
 
-body{
+
+body {
+
     background-color: #114a91;
+
     font-family: 'Arial Black', 'Arial Bold', sans-serif;
+
     height: 100vh;
+
     display: flex;
+
     flex-direction: column;
+
 }
+
+
 
 .landing-top {
+
     background-color: #174a94;
+
     flex: 6;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     justify-content: center;
+
     text-align: center;
+
     padding: 20px;
+
 }
+
+
 
 .landing-top h1 {
+
     color: #ffffff;
+
     font-size: 3rem;
+
     text-transform: uppercase;
+
     letter-spacing: 2px;
+
     margin-bottom: 15px;
+
     text-shadow: 4px 5px 0px #091c3d;
+
 }
 
-.landing-top p{
+
+
+.landing-top p {
+
     color: #ffffff;
+
     font-size: 1.7rem;
+
     text-transform: uppercase;
+
     margin-bottom: 15px;
+
     line-height: 1.5;
+
     text-shadow: 2px 3px 0px #091c3d;
+
 }
 
-.start-btn{
+
+
+.start-btn {
+
     background-color: #1d366f;
+
     color: #ffffff;
+
     font-family: inherit;
+
     font-size: 1.2rem;
+
     padding: 15px 50px;
+
     border: none;
+
     border-radius: 30px;
+
     cursor: pointer;
+
     transition: background-color 0.2s;
+
 }
+
+
 
 .start-btn:hover {
-    background-color: #11224d; 
+
+    background-color: #11224d;
+
 }
+
+
 
 a {
+
     text-decoration: none;
+
 }
 
-/* Bottom for landing page */
+
 
 .landing-bottom {
+
     background-color: #ffffff;
+
     flex: 5;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
 }
 
-/* LOG IN */
+
 
 body:has(#log) {
+
     font-family: Arial, sans-serif;
+
     justify-content: center;
+
     align-items: center;
+
 }
 
-.container{
+
+
+.container {
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
 }
 
-/*White background for log in and sign up*/
-#log, #sign{
+
+
+#log, #sign {
+
     background-color: #ffffff;
+
     width: 380px;
+
     padding: 30px 40px;
+
     border-radius: 40px;
+
     text-align: center;
+
 }
 
-#log h2, #sign h2{
+
+
+#log h2, #sign h2 {
+
     color: #000000;
+
     font-size: 24px;
+
     font-weight: bold;
+
     margin-bottom: 25px;
+
 }
+
+
 
 #log label, #sign label {
+
     display: block;
+
     text-align:  left;
+
     font-weight: bold;
+
     font-size: 16px;
+
     color: #000000;
+
     margin-bottom: 5px;
 
 }
 
+
+
 #log input, #sign input {
+
     width: 100%;
+
     background-color: #e6e6e6;
+
     border: 2px solid #000000;
+
     padding: 10px;
+
     font-size: 14px;
+
     margin-bottom: 20px;
+
     outline: none;
+
 }
+
+
 
 #log button, #sign button {
-    background-color: #1d366f;
+
+    background-color: #12ec0b;
+
     color: #ffffff;
+
     padding: 10px 40px;
+
     font-size: 18px;
+
     font-weight: bold;
+
     border: none;
+
     border-radius: 30px;
+
     cursor: pointer;
+
     margin-bottom: 15px;
+
 }
 
-#log button:hover, #sign button:hover{
-    background-color: #11224d;
+
+
+#log button:hover, #sign button:hover {
+
+    background-color: #05420f;
+
 }
 
-/*Buttom ink color*/
+
+
 #log p, #sign p {
+
     font-weight: bold;
+
     color:#000000;
+
     margin:0;
+
 }
+
+
 
 #log a, #sign a {
+
     color: #4285f4;
+
     text-decoration: none;
+
     font-weight: normal;
+
 }
+
+
 
 #log a:hover, #sign a:hover {
+
     text-decoration: underline;
+
 }
 
-/*DepEd Logon*/
+
 
 .logo-container {
+
     margin-top: 20px;
+
 }
+
+
 
 .bottom-logo {
+
     max-width: 200px;
+
     height: auto;
+
     position: relative;
+
     left: 15px;
+
 }
 
-/* Sign up */
+
+
 #sign h2 {
-    margin-bottom: 15px; 
+
+    margin-bottom: 15px;
+
 }
+
+
 
 #sign label {
+
     font-size: 15px;
-    margin-bottom: 3px; 
+
+    margin-bottom: 3px;
+
 }
+
+
 
 #sign input {
+
     padding: 8px;
-    margin-bottom: 12px; 
+
+    margin-bottom: 12px;
+
 }
+
+
 
 #sign button {
+
     margin-top: 10px;
-    margin-bottom: 10px; 
+
+    margin-bottom: 10px;
+
 }
 
-
-/* Inside the dashboard */
 
 
 body.dashboard-body {
+
    background-color: #ffffff;
+
    height: auto;
+
    display: block;
+
    margin: 0;
+
 }
+
 
 
 .dash-header {
+
     background-color: #114a91;
+
     display: flex;
+
     align-items: center;
-    padding: 20px 40px; 
+
+    padding: 20px 40px;
+
 }
+
+
+
+.purchase-header {
+
+    justify-content: space-between;
+
+}
+
+
+
+.header-left {
+
+    display: flex;
+
+    align-items: center;
+
+}
+
 
 
 .logo-circle {
-    width: 80px; 
-    height: auto; 
+
+    width: 80px;
+
+    height: auto;
+
     margin-right: 20px;
+
 }
+
+
 
 .logo-text {
-    width: 150px; 
+
+    width: 150px;
+
     height: auto;
+
     margin-right: 20px;
+
 }
 
-.header-divider{
+
+
+.header-divider {
+
     width: 2px;
-    height: 70px; 
+
+    height: 70px;
+
     background-color: #ffffff;
+
     margin-right: 20px;
+
 }
 
 
-.header-titles{
+
+.header-titles {
+
     color: #ffffff;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: center;
+
 }
 
-.header-titles h2{
-    font-size: 28px; 
+
+
+.header-titles h2 {
+
+    font-size: 28px;
+
     margin: 0 0 5px 0;
-    font-family: 'Arial Black', Arial, sans-serif; 
+
+    font-family: 'Arial Black', Arial, sans-serif;
+
 }
+
+
 
 .header-titles h3 {
-    font-size: 18px; 
+
+    font-size: 18px;
+
     margin: 0;
+
     font-family: Arial, sans-serif;
+
     font-weight: normal;
+
 }
+
 
 
 .red-bar {
+
     background-color: #b31b20;
-    height: 40px; 
+
+    height: 40px;
+
     display: flex;
+
     align-items: center;
+
     padding-left: 20px;
+
     width: 100%;
+
 }
+
+
 
 .hamburger {
+
     width: 35px;
+
     height: 25px;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: space-between;
+
     cursor: pointer;
+
     transition: transform 0.2s;
+
 }
+
+
 
 .hamburger:hover {
+
     transform: scale(1.1);
+
 }
+
+
 
 .hamburger span {
+
     display: block;
+
     width: 100%;
+
     height: 4px;
+
     background-color:#ffffff;
+
     border-radius: 2px;
+
 }
+
+
 
 .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh; 
-    width: 300px;
-    background-color: #e6e6e6;
-    box-shadow: 4px 0 10px rgba(0,0,0,0.3);
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    font-family: 'Times New Roman', Times, serif;
-    padding-top: 20px;
 
-    /* For 60fps */
-    transform: translateX(-100%); 
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    height: 100vh;
+
+    width: 300px;
+
+    background-color: #e6e6e6;
+
+    box-shadow: 4px 0 10px rgba(0,0,0,0.3);
+
+    border-top-right-radius: 20px;
+
+    border-bottom-right-radius: 20px;
+
+    z-index: 1000;
+
+    display: flex;
+
+    flex-direction: column;
+
+    font-family: 'Times New Roman', Times, serif;
+
+    padding-top: 40px;
+
+    padding-bottom: 20px;
+
+    transform: translateX(-100%);
+
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
 }
+
+
+
+.close-btn {
+
+    position: absolute;
+
+    top: 15px;
+
+    right: 20px;
+
+    font-size: 24px;
+
+    color: #000;
+
+    cursor: pointer;
+
+    transition: color 0.2s;
+
+}
+
+
+
+.close-btn:hover {
+
+    color: #b31b20;
+
+}
+
+
 
 .sidebar.active {
-    transform: translateX(0); 
+
+    transform: translateX(0);
+
 }
+
+
 
 .sidebar-user {
+
     display: flex;
-    align-items: center; 
+
+    align-items: center;
+
     padding: 0 20px 30px 20px;
+
 }
+
+
 
 .user-icon {
+
     font-size: 35px;
+
     margin-right: 15px;
+
     color: #000;
+
 }
+
+
 
 #displaySidebarName {
+
     font-weight: bold;
+
     font-size: 18px;
+
     color: #000;
+
 }
+
+
 
 .nav-item {
+
     display: flex;
+
     align-items: center;
+
     padding: 15px 20px;
+
     color: #000;
+
     text-decoration: none;
+
     transition: background-color 0.2s;
+
 }
 
+
+
 .nav-item:hover {
+
     background-color: #cccccc;
+
 }
+
 
 
 .nav-icon {
+
     font-size: 35px;
+
     margin-right: 15px;
+
     color: #000;
+
 }
+
+
 
 .nav-text {
+
     font-size: 18px;
+
     font-weight: bold;
+
     text-align: center;
+
     line-height: 1.2;
+
 }
 
-/* log out button */
+
+
 .logout-btn {
+
     margin-top: auto;
+
     margin-bottom: 30px;
+
     background: transparent;
+
     border: none;
+
     color: #000;
+
     font-size: 20px;
+
     font-weight: bold;
+
     font-family: 'Arial Black', Arial, sans-serif;
+
     cursor: pointer;
+
     text-align: center;
+
 }
+
+
 
 .logout-btn:hover {
+
     text-decoration: underline;
+
 }
 
-/* For the welcome text */
+
+
 .welcome-content {
+
     text-align: center;
+
     margin-top: 50px;
+
     font-family: 'Times New Roman', Times, serif;
+
     color:#000;
+
 }
+
+
 
 .welcome-content h1 {
+
     font-size: 50px;
+
     margin: 0;
+
 }
+
+
 
 .welcome-content h2 {
+
     font-size: 35px;
+
     margin: 0;
+
     text-transform: uppercase;
+
 }
+
+
 
 .welcome-content h3 {
+
     font-size: 35px;
+
     margin: 0;
+
     text-transform: uppercase;
+
 }
 
-/* For item.html */
+
 
 .form-main {
+
    display: flex;
+
    justify-content: center;
+
    padding-top: 50px;
+
 }
 
-.gray-box {
-    background-color: #cccccc;
-    border-radius:  20px;
-    padding: 30px 40px;
-    width: 700px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
 
-.gray-box h2 {
-    text-align: center;
-    font-family: 'Arial Black', Arial, sans-serif;
-    font-size: 28px;
-    margin-bottom: 30px;
-    color: #000;
 
-    /* for shadow */
-    text-shadow: 3px 3px 0px rgba(0,0,0,0.6);
-    text-transform: uppercase;
-}
+.data-table-main {
 
-.form-row{
+    padding: 15px 40px 30px 40px;
+
     display: flex;
+
+    flex-direction: column;
+
+    width: 100%;
+
+}
+
+
+
+.toolbar-actions {
+
+    display: flex;
+
+    gap: 10px;
+
     align-items: center;
-    margin-bottom: 12px;
+
 }
 
-.form-row label {
-    width: 280px;
-    font-family: 'Arial Black', Arial, sans-serif;
-    font-size: 22px;
-    color: #000;
-    text-transform: uppercase;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.6);
-}
 
-.form-row input{
-    flex: 1;
-    height: 35px;
-    padding: 0 10px;
-    border:none;
-    background-color: #ffffff;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
+
+.toolbar-input, .toolbar-dropdown {
+
+    height: 45px;
+
+    padding: 0 15px;
+
+    border: 2px solid #000000;
+
     outline: none;
+
+    font-family: Arial, sans-serif;
+
+    font-weight: bold;
+
+    font-size: 18px;
+
 }
 
-.enter-btn{
-    background-color: #5575ff;
-    color:white;
-    font-family: Arial, sans-serif;
-    border:none;
-    padding: 10px 50px;
-    font-size: 22px;
-    font-weight: bold;
-    border-radius: 30px;
+
+
+.toolbar-input { width: 250px; }
+
+.toolbar-dropdown { background-color: #e6e6e6; cursor: pointer; }
+
+
+
+.action-btn {
+
+    height: 45px;
+
+    padding: 0 15px;
+
+    border: 2px solid #000000;
+
+    font-family: 'Arial Black', Arial, sans-serif;
+
+    font-size: 16px;
+
+    color: #ffffff;
+
     cursor: pointer;
-    display: block;
-    margin: 25px auto 0 auto;
+
+    transition: opacity 0.2s;
+
 }
 
-.enter-btn:hover {
-    background-color: #3355cc;
-}
 
-/*Purchase.html */
 
-.form-row input{
-    height: 35px;
-    padding: 0 10px;
-    border:none;
-    background-color: #ffffff;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    outline: none;
-}
+.action-btn:hover { opacity: 0.8; }
 
-.short-input {
-    width: 280px;
-}
+.btn-search { background-color: #ffffff; color: #000000; }
 
-.long-input {
-    width: 350px;
-}
+.btn-add { background-color: #28a745; }
 
-/* Monitor.html */
+.btn-edit { background-color: #ffc107; color: #000000; }
 
-.monitor-box {
-    width: 800px;
-}
+.btn-delete { background-color: #dc3545; }
 
-.status-dropdown {
-    display: block;
-    margin: 0 auto 20px auto;
-    width: 300px;
-    height: 30px;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
-    border: 2px solid #000000;
-    outline: none;
-    text-align: center;
-}
 
-.monitor-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-}
 
-.monitor-row label {
+.table-main-title {
+
     font-family: 'Arial Black', Arial, sans-serif;
-    font-size: 22px;
-    color: #000000;
+
+    font-size: 24px;
+
+    color: #ffffff;
+
+    background-color: #114a91;
+
+    text-shadow: 2px 2px 0px #091c3d;
+
     text-transform: uppercase;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.6);
-    margin-right: 20px;
-    width: 250px;
-    text-align: right;
+
+    padding: 12px 20px;
+
+    margin-bottom: 0;
+
+    width: 100%;
+
+    border: 3px solid #000000;
+
+    border-bottom: none;
+
+    text-align: center;
+
 }
 
-.monitor-row input {
-    width: 280px;
-    height: 35px;
-    border: 2px solid #000000;
-    outline: none;
-    padding: 0 10px;
-    font-size: 16px;
-    font-family: Arial, sans-serif;
-    font-weight: bold;
+
+
+.large-table {
+
+    margin-top: 0 !important;
+
+    border-top: none !important;
+
+    height: calc(100vh - 200px);
+
 }
+
+
 
 .table-container {
+
     width: 100%;
+
     height: 250px;
+
     background-color: #ffffff;
+
     border: 3px solid #000000;
+
     margin-top: 25px;
+
     overflow-y: auto;
+
 }
+
+
 
 .table-container table {
+
     width: 100%;
+
     border-collapse: collapse;
+
 }
 
+
+
 .table-container th, .table-container td {
+
     border: 1px solid #e6e6e6;
+
     padding: 10px;
+
     text-align: center;
+
     font-family: Arial, sans-serif;
 
 }
 
+
+
 .table-container th {
+
     background-color: #114a91;
+
     color: #ffffff;
+
     position: sticky;
+
     top: 0;
+
+}
+
+
+
+#purchaseTable th:nth-child(1),
+
+#purchaseTable td:nth-child(1),
+
+#purchaseTable th:nth-child(2),
+
+#purchaseTable td:nth-child(2) {
+
+    width: 20%;
+
+}
+
+
+
+/* ============================================================== */
+
+/* POP-UP MODAL TWEAKS (TALLER HEIGHT & FIXED SPACING)            */
+
+/* ============================================================== */
+
+
+
+.modal-overlay {
+
+    display: none;
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background-color: rgba(0, 0, 0, 0.6);
+
+    z-index: 2000;
+
+    justify-content: center;
+
+    align-items: center;
+
+}
+
+
+
+/* Pinalaki ang HEIGHT, hindi ginalaw ang lapad */
+
+.purchase-panel {
+
+    background-color: #c0c0c0;
+
+    margin: 0;
+
+    padding: 28px 28px 28px 28px;
+
+    width: 90%;
+
+    max-width: 800px;
+
+    min-height: 550px; /* <--- ETO YUNG HEIGHT NA PINALAKI! */
+
+    border-radius: 10px;
+
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+
+    position: relative;
+
+    display: flex;
+
+    flex-direction: column; /* Para maitulak yung buttons sa pinakababa */
+
+}
+
+
+
+/*For x button */
+
+
+
+.close-modal {
+
+    position: absolute;
+
+    top: -8px; /* Inusog pataas para hindi mag-overlap */
+
+    right: 1px; /* Inusog sa kanan */
+
+    font-size: 45px; /* <--- PINALAKI ANG X BUTTON! */
+
+    font-weight: bold;
+
+    color: #000;
+
+    cursor: pointer;
+
+    line-height: 1; /* Para hindi kumain ng extra space yung box ng X */
+
+    z-index: 10;
+
+}
+
+.close-modal:hover { color: #b31b20; }
+
+
+
+/* Pinagdikit ang Label at Textbox (Tinanggal ang malaking space) */
+
+.form-row {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-start; /* <--- Ito ang magdidikit sa kanila papuntang kaliwa */
+
+    margin-bottom: 15px;
+
+    width: 100%;
+
+    gap: 15px; /* Saktong distansya lang sa pagitan ng salita at kahon */
+
+}
+
+
+
+.form-row label {
+
+    width: 230px; /* Inusog nang konti para kasya yung mas malaking font */
+
+    font-family: 'Arial Black', Arial, sans-serif;
+
+    font-size: 24px; /* <--- PINALAKI ANG TEXT NG LABEL! (Mula 18px) */
+
+    color: #000;
+
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+
+}
+
+
+
+.form-row input, .desc-input {
+
+    flex-grow: 1;
+
+    width: auto;
+
+    border: none;
+
+    font-size: 20px; /* <--- PINALAKI ANG FONT NG TINATYPE MO SA LOOB! */
+
+    font-family: Arial, sans-serif;
+
+    font-weight: bold;
+
+    outline: none;
+
+    border-radius: 6px;
+
+    transition: background-color 0.2s;
+
+}
+
+
+
+.form-row input {
+
+    height: 55px; /* <--- PINATABA ANG KAHON NG DATE! (Mula 40px) */
+
+    padding: 0 15px;
+
+    background-color: #ffffff;
+
+}
+
+
+
+.desc-row {
+
+    align-items: flex-start;
+
+}
+
+
+
+.desc-row label {
+
+    margin-top: 15px; /* Binaba ng konti para pantay sa unang linya ng text */
+
+}
+
+
+
+.desc-input {
+
+    height: 350px; /* <--- PINAHABA NG TODO ANG DESCRIPTION BOX PARA MAG-FIT SA POP-UP! */
+
+    padding: 15px;
+
+    background-color: #ffffff;
+
+    resize: none;
+
+    font-weight: normal;
+
+}
+
+
+
+/* Footer & Buttons */
+
+/* UPDATED FOOTER (TINANGGAL ANG LINYA) */
+.panel-footer {
+    display: flex;
+    justify-content: center; 
+    gap: 15px; 
+    
+    margin-top: 10px; 
+    
+    /* 30px na space sa ilalim ng buttons para sa bottom margin ng pop-up */
+    padding-bottom: 0; 
+    
+    width: 100%; 
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+
+.save-btn, .cancel-btn {
+
+    padding: 10px 40px;
+
+    border: none;
+
+    border-radius: 20px;
+
+    font-family: 'Arial Black', Arial, sans-serif;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    color: white;
+
+}
+
+
+
+.save-btn { background-color: #048b3c; }
+
+.save-btn:hover { background-color: #034122; }
+
+
+
+.cancel-btn { background-color: #b90909; }
+
+.cancel-btn:hover { background-color: #3d0303; }
+
+
+
+/* I-update itong part sa style.css */
+input[readonly], 
+textarea[readonly], 
+select[disabled] {
+    background-color: #a6a6a6; 
+    color: #333333;
+    cursor: not-allowed; /* Eto yung warning sign cursor */
+}
+
+
+
+/* --- HACK PARA LUMAKI ANG CALENDAR POP-UP --- */
+
+input[type="date"] {
+
+    font-size: 24px !important;
+
+}
+
+
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+
+    transform: scale(1.4);
+
+    cursor: pointer;
+
+    margin-right: 8px;
+
+}
+
+
+
+/* Mobile Responsive */
+
+/* ============================================================== */
+/* DYNAMIC BUTTON COLORS FOR DELETE MODE                          */
+/* ============================================================== */
+
+/* Targets the 'Save/Action' button INSIDE the panel ONLY when its parent modal has data-action="delete" */
+[data-action="delete"] .purchase-panel .save-btn {
+    background-color: #dc3545; /* <--- Pinalitan natin ng PULA (Red) para sa Delete */
+}
+
+
+[data-action="delete"] .purchase-panel .save-btn:hover {
+    background-color: #b02a37; /* Mas madilim na pula kapag hino-hover */
+}
+
+[data-action="delete"] .purchase-panel .cancel-btn {
+    background-color: #a6a6a6; /* <--- Pinalitan natin ng GREY (Neutral) para sa Cancel */
+    color: #333333; /* Darker text para litaw sa grey */
+}
+
+/* Hover effect para sa Grey Cancel button */
+[data-action="delete"] .purchase-panel .cancel-btn:hover {
+    background-color: #8c8c8c; /* Mas madilim na grey kapag hino-hover */
+}
+
+
+/* ============================================================== */
+/* ITEM INVENTORY TABLE COLUMN WIDTHS                             */
+/* ============================================================== */
+
+/* 1. Serial Number */
+#itemTable th:nth-child(1),
+#itemTable td:nth-child(1) {
+    width: 15%;
+}
+
+/* 2. Item Name (Medyo malaki) */
+#itemTable th:nth-child(2),
+#itemTable td:nth-child(2) {
+    width: 25%;
+}
+
+/* 3. Status (Maliit lang) */
+#itemTable th:nth-child(3),
+#itemTable td:nth-child(3) {
+    width: 12%;
+}
+
+/* 4. Date Checked (Maliit lang, kasing-size ng Status) */
+#itemTable th:nth-child(4),
+#itemTable td:nth-child(4) {
+    width: 13%;
+}
+
+/* 5. Remarks (Pinakamalawak at naka-left align para madaling basahin) */
+#itemTable th:nth-child(5),
+#itemTable td:nth-child(5) {
+    width: 35%;
+    text-align: left; /* Para mas maayos basahin ang mahabang text */
 }

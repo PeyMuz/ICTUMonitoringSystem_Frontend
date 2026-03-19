@@ -4,16 +4,32 @@
     <meta charset="utf-8">
     <title>Record Purchase Request - ICTU Monitoring</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="dashboard-body" onload="loadUser()">
+<body onload="loadUser()" class="dashboard-body">
 
-    <header class="dash-header">
-        <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
-        <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
-        <div class="header-divider"></div>
-        <div class="header-titles">
-            <h2>Department of Education - NCR</h2>
-            <h3>ICTU Monitoring Supplies</h3>
+    <header class="dash-header purchase-header">
+        <div class="header-left">
+            <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
+            <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
+            <div class="header-divider"></div>
+            <div class="header-titles">
+                <h2>Department of Education - NCR</h2>
+                <h3>ICTU Monitoring Supplies</h3>
+            </div>
+        </div>
+        
+        <div class="toolbar-actions">
+            <input type="number" id="searchInput" class="toolbar-input" placeholder="Search PR Number...">
+            <select id="searchCategory" class="toolbar-dropdown" onchange="updateSearchType()">
+                <option value="prnumber">PR Number</option>
+                <option value="prdate">Date</option>
+                <option value="description">Description</option>
+            </select>
+            <button class="action-btn btn-search" onclick="executeSearch()">Search</button>
+            <button class="action-btn btn-add" onclick="openModal('add')">Add</button>
+            <button class="action-btn btn-edit" onclick="openModal('edit')">Edit</button>
+            <button class="action-btn btn-delete" onclick="openModal('delete')">Delete</button>
         </div>
     </header>
 
@@ -26,60 +42,76 @@
     </div>
 
     <nav id="sidebar" class="sidebar">
+        <div class="close-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-arrow-left"></i>
+        </div>
+
         <div class="sidebar-user">
-            <div class="user-icon">👤</div>
+            <i class="fa-solid fa-circle-user user-icon"></i>
             <span id="displaySidebarName">[Name of the User]</span>
         </div>
         
         <a href="item.html" class="nav-item">
-            <span class="nav-icon">📝</span>
-            <span class="nav-text">Record Item<br>Receipt</span>
+            <i class="fa-solid fa-file-signature nav-icon"></i>
+            <span class="nav-text">Inventory Items</span>
         </a>
         
         <a href="purchase.html" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span class="nav-text">Record Purchase<br>Receipt</span>
+            <i class="fa-solid fa-hand-holding-dollar nav-icon"></i>
+            <span class="nav-text">Purchase Requests</span>
         </a>
         
         <a href="monitor.html" class="nav-item">
-            <span class="nav-icon">📊</span>
-            <span class="nav-text">Monitoring Item<br>Status</span>
+            <i class="fa-solid fa-magnifying-glass-chart nav-icon"></i>
+            <span class="nav-text">Item Status</span>
         </a>
         
         <button class="logout-btn" onclick="logout()">LOG OUT</button>
     </nav>
 
-    <main class="form-main">
-        <div class="gray-box">
-            <h2>RECORD PURCHASE REQUEST</h2>
-            
-            <div class="form-row">
-                <label>PR NUMBER:</label>
-                <input type="number" id="prnumber" class="short-input">
-            </div>
-            
-            <div class="form-row">
-                <label>PR DATE:</label>
-                <input type="date" id="prdate" class="short-input">
-            </div>
-            
-            <div class="form-row">
-                <label>ITEM NAME:</label>
-                <input type="text" id="itemname" class="short-input">
-            </div>
-            
-            <div class="form-row">
-                <label>QUANTITY:</label>
-                <input type="number" id="quantity" class="short-input">
-            </div>
-            
-            <div class="form-row">
-                <label>DESCRIPTION:</label>
-                <input type="text" id="description" class="long-input">
-            </div>
+    <main class="data-table-main">
 
-            <button class="enter-btn" onclick="alert('Purchase Request Saved!')">Enter</button>
+        <h2 class="table-main-title">Purchase Requests</h2>
+        
+        <div class="table-container large-table">
+            <table id="purchaseTable">
+                <thead>
+                    <tr>
+                        <th>PR Number</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="purchaseBody">
+                </tbody>
+            </table>
         </div>
+
+        <div id="actionModal" class="modal-overlay">
+            <div class="purchase-panel">
+                
+                <div class="form-row" id="prRow">
+                    <label>PR NUMBER:</label>
+                    <input type="number" id="prnumber" onclick="makeEditable('prnumber')" readonly>
+                </div>
+                
+                <div class="form-row">
+                    <label>DATE:</label>
+                    <input type="date" id="prdate" onclick="makeEditable('prdate')" readonly>
+                </div>
+                
+                <div class="form-row desc-row">
+                    <label>DESCRIPTION:</label>
+                    <textarea id="description" class="desc-input" placeholder="Input description here..." onclick="makeEditable('description')" readonly></textarea>
+                </div>
+
+                <div class="panel-footer">
+                    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button class="save-btn" id="modalActionBtn" onclick="savePurchase()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="index.js"></script>

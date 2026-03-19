@@ -4,15 +4,14 @@
     <meta charset="utf-8">
     <title>Dashboard - ICTU Monitoring</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body onload="loadUser()" class="dashboard-body">
 
     <header class="dash-header">
         <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
         <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
-        
         <div class="header-divider"></div>
-        
         <div class="header-titles">
             <h2>Department of Education - NCR</h2>
             <h3>ICTU Monitoring Supplies</h3>
@@ -28,24 +27,28 @@
     </div>
 
     <nav id="sidebar" class="sidebar">
+        <div class="close-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-arrow-left"></i>
+        </div>
+
         <div class="sidebar-user">
-            <div class="user-icon">👤</div>
+            <i class="fa-solid fa-circle-user user-icon"></i>
             <span id="displaySidebarName">[Name of the User]</span>
         </div>
         
         <a href="item.html" class="nav-item">
-            <span class="nav-icon">📝</span>
-            <span class="nav-text">Record Item<br>Receipt</span>
+            <i class="fa-solid fa-file-signature nav-icon"></i>
+            <span class="nav-text">Item Inventory</span>
         </a>
         
         <a href="purchase.html" class="nav-item">
-            <span class="nav-icon">💸</span>
-            <span class="nav-text">Record Purchase<br>Receipt</span>
+            <i class="fa-solid fa-hand-holding-dollar nav-icon"></i>
+            <span class="nav-text">Purchase Requests</span>
         </a>
         
         <a href="monitor.html" class="nav-item">
-            <span class="nav-icon">📊</span>
-            <span class="nav-text">Monitoring Item<br>Status</span>
+            <i class="fa-solid fa-magnifying-glass-chart nav-icon"></i>
+            <span class="nav-text">Monitoring Item Status</span>
         </a>
         
         <button class="logout-btn" onclick="logout()">LOG OUT</button>
