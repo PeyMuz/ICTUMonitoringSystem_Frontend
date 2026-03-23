@@ -20,9 +20,9 @@
         </div>
         
         <div class="toolbar-actions">
-            <input type="number" id="searchInput" class="toolbar-input" placeholder="Search PR Number...">
+            <input type="number" id="searchInput" class="toolbar-input" placeholder="Search..." oninput="executeSearch()">
             <select id="searchCategory" class="toolbar-dropdown" onchange="updateSearchType()">
-                <option value="prnumber">PR Number</option>
+                <option value="prnumber">Purchase Number</option>
                 <option value="prdate">Date</option>
                 <option value="description">Description</option>
             </select>
@@ -35,74 +35,56 @@
 
     <div class="red-bar">
         <div class="hamburger" onclick="toggleSidebar()">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </div>
     </div>
 
     <nav id="sidebar" class="sidebar">
-        <div class="close-btn" onclick="toggleSidebar()">
-            <i class="fa-solid fa-arrow-left"></i>
-        </div>
-
+        <div class="close-btn" onclick="toggleSidebar()"><i class="fa-solid fa-arrow-left"></i></div>
         <div class="sidebar-user">
             <i class="fa-solid fa-circle-user user-icon"></i>
             <span id="displaySidebarName">[Name of the User]</span>
         </div>
+        <a href="item.html" class="nav-item"><i class="fa-solid fa-file-signature nav-icon"></i><span class="nav-text">Inventory Items</span></a>
+        <a href="purchase.html" class="nav-item"><i class="fa-solid fa-hand-holding-dollar nav-icon"></i><span class="nav-text">Purchase Requests</span></a>
+        <a href="monitor.html" class="nav-item"><i class="fa-solid fa-magnifying-glass-chart nav-icon"></i><span class="nav-text">Item Status</span></a>
         
-        <a href="item.html" class="nav-item">
-            <i class="fa-solid fa-file-signature nav-icon"></i>
-            <span class="nav-text">Inventory Items</span>
-        </a>
-        
-        <a href="purchase.html" class="nav-item">
-            <i class="fa-solid fa-hand-holding-dollar nav-icon"></i>
-            <span class="nav-text">Purchase Requests</span>
-        </a>
-        
-        <a href="monitor.html" class="nav-item">
-            <i class="fa-solid fa-magnifying-glass-chart nav-icon"></i>
-            <span class="nav-text">Item Status</span>
+        <a href="#" class="nav-item" onclick="toggleTheme(); return false;">
+            <i class="fa-solid fa-moon nav-icon" id="themeIcon"></i>
+            <span class="nav-text" id="themeText">Dark Mode</span>
         </a>
         
         <button class="logout-btn" onclick="logout()">LOG OUT</button>
     </nav>
 
     <main class="data-table-main">
-
         <h2 class="table-main-title">Purchase Requests</h2>
-        
         <div class="table-container large-table">
             <table id="purchaseTable">
                 <thead>
                     <tr>
-                        <th>PR Number</th>
+                        <th>Purchase Number</th>
                         <th>Date</th>
                         <th>Description</th>
                     </tr>
                 </thead>
-                <tbody id="purchaseBody">
-                </tbody>
+                <tbody id="purchaseBody"></tbody>
             </table>
         </div>
 
         <div id="actionModal" class="modal-overlay">
             <div class="purchase-panel">
-                
                 <div class="form-row" id="prRow">
-                    <label>PR NUMBER:</label>
-                    <input type="number" id="prnumber" onclick="makeEditable('prnumber')" readonly>
+                    <label>Purchase Number:</label>
+                    <input type="number" id="prnumber" placeholder="Enter purchase number..." onclick="makeEditable('prnumber')" readonly>
                 </div>
-                
                 <div class="form-row">
-                    <label>DATE:</label>
+                    <label>Date:</label>
                     <input type="date" id="prdate" onclick="makeEditable('prdate')" readonly>
                 </div>
-                
                 <div class="form-row desc-row">
-                    <label>DESCRIPTION:</label>
-                    <textarea id="description" class="desc-input" placeholder="Input description here..." onclick="makeEditable('description')" readonly></textarea>
+                    <label>Description:</label>
+                    <textarea id="description" class="desc-input" placeholder="Enter description here..." onclick="makeEditable('description')" readonly></textarea>
                 </div>
 
                 <div class="panel-footer">
@@ -111,7 +93,6 @@
                 </div>
             </div>
         </div>
-
     </main>
 
     <script src="index.js"></script>
