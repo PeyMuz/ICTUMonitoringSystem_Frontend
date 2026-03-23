@@ -1,6 +1,60 @@
+// === SIDEBAR LOGIC ===
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+
     if (sidebar) sidebar.classList.toggle('active');
+
+    if (overlay) {
+        if (overlay.classList.contains('active')) {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        } else {
+            overlay.style.display = 'block';
+            setTimeout(() => overlay.classList.add('active'), 10);
+        }
+    }
+}
+
+// === DROPDOWN LOGIC ===
+function toggleProfileDropdown() {
+    document.getElementById('profileDropdown').classList.toggle('show');
+}
+
+window.onclick = function(event) {
+    if (!event.target.closest('.user-profile-container')) {
+        const dropdown = document.getElementById('profileDropdown');
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+        }
+    }
+}
+
+// === FULLSCREEN LOGIC ===
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log('Error attempting to enable fullscreen: ${err.message}');
+        });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+// === AUTO-ACTIVE SIDEBAR LOGIC ===
+function setupActiveSidebar() {
+    const currentPath = window.location.pathname.split('/').pop();
+    const navItems = document.querySelectorAll('.concept-sidebar .nav-item');
+
+    navItems.forEach(item => {
+        item.classList.remove('active-nav');
+        const href = item.getAttribute('href');
+        if (href === currentPath || (currentPath === '' && href === 'index.html')) {
+            item.classList.add('active-nav');
+        }
+    });
 }
 
 // === DARK MODE LOGIC ===
@@ -57,13 +111,21 @@ function logout() { localStorage.removeItem('activeUser'); window.location.href 
 
 function loadUser () { 
     applyTheme();
+    setupRowHighlight();
+    setupActiveSidebar();
+
     const activeUserStr = localStorage.getItem('activeUser');
     if (!activeUserStr) { window.location.href = "log.html"; return; }
     
     const activeUser = JSON.parse(activeUserStr);
+
     if (document.getElementById('displayFullName')) document.getElementById('displayFullName').innerText = activeUser.name;
     if (document.getElementById('displayPosition')) document.getElementById('displayPosition').innerText = activeUser.position;
-    if (document.getElementById('displaySidebarName')) document.getElementById('displaySidebarName').innerText = activeUser.name;
+
+
+    if (document.getElementById('displayHeaderName')) document.getElementById('displayHeaderName').innerText = activeUser.name;
+    if (document.getElementById('dropName')) document.getElementById('dropName').innerText = activeUser.name;
+    if (document.getElementById('dropRole')) document.getElementById('dropRole').innerText = activeUser.position;
 }
 
 function makeEditable(fieldId) {
@@ -78,37 +140,117 @@ function makeEditable(fieldId) {
 }
 
 // === PURCHASE REQUEST LOGIC ===
+let selectedPRData = null;
+
+function setupRowHighlight() {
+    const tbody = document.getElementById('purchaseBody');
+    const btnEdit = document.getElementById('btnEditAction');
+    const btnDelete = document.getElementById('btnDeleteAction');
+
+    if (!tbody) return
+
+    tbody.addEventListener('click', function(e) {
+        const targetRow = e.target.closest('tr');
+        if (!targetRow) return;
+
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+
+        targetRow.classList.add('table-active');
+
+        btnEdit.disabled = false;
+        btnDelete.disabled = false;
+
+        const cells = targetRow.querySelectorAll('td');
+        selectedPRData = {
+            prNumber: cells[0].innerText,
+            date: cells[1].innerText,
+            description: cells[2].innerText
+        };
+    });
+
+    document.addEventListener('click', function(e) {
+        if (tbody.contains(e.target) || e.target.closest('#btnEditAction') || e.target.closest('#btnDeleteAction')) {
+            return;
+        }
+
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+
+        btnEdit.disabled = true;
+        btnDelete.disabled = true;
+        selectedPRData = null;
+    })
+}
+
 function openModal(actionType) {
-    const modal = document.getElementById('actionModal');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    modal.setAttribute('data-action', actionType); 
-    resetFields();
-    
-    const prRow = document.getElementById('prRow');
-    const actionBtn = document.getElementById('modalActionBtn');
-    const prNum = document.getElementById('prnumber');
-    const prDate = document.getElementById('prdate');
-    const prDesc = document.getElementById('description');
-    
+    const title = document.getElementById('modalTitle');
+    const prContainer = document.getElementById('prFieldContainer');
+    const prField = document.getElementById('modalPrField');
+    const dateField = document.getElementById('modalDateField');
+    const descField = document.getElementById('modalDescField');
+    const saveBtn = document.getElementById('btnSaveModal');
+    const cancelBtn = document.getElementById('btnCancelModal');
+
     if (actionType === 'add') {
-        if (prRow) prRow.style.display = 'none'; 
-        actionBtn.innerText = 'Save Changes';
-        if(prDate) prDate.readOnly = false;
-        if(prDesc) prDesc.readOnly = false;
+        title.textContent = "Add Purchase Request";
+        prContainer.style.display = 'none';
+        dateField.value = "";
+        descField.value = "";
+
+        dateField.readOnly = false;
+        descField.readOnly = false;
+        dateField.classList.remove('bg-light');
+        descField.classList.remove('bg-light');
+
+        saveBtn.textContent = "Save";
+        saveBtn.className = "btn btn-success px-4";
+
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+        
     } else if (actionType === 'edit') {
-        if (prRow) prRow.style.display = 'flex'; 
-        actionBtn.innerText = 'Update Record';
-        if(prNum) prNum.readOnly = true;
-        if(prDate) prDate.readOnly = false;
-        if(prDesc) prDesc.readOnly = false;
+        title.textContent = "Edit Purchase Request";
+        prContainer.style.display = 'block';
+        
+        prField.value = selectedPRData.prNumber;
+        dateField.value = selectedPRData.date;
+        descField.value = selectedPRData.description;
+
+        dateField.readOnly = false;
+        descField.readOnly = false;
+        dateField.classList.remove('bg-light');
+        descField.classList.remove('bg-light');
+
+        saveBtn.textContent = "Save";
+        saveBtn.className = "btn btn-success px-4";
+
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+
     } else if (actionType === 'delete') {
-        if (prRow) prRow.style.display = 'flex'; 
-        actionBtn.innerText = 'Delete Record';
-        if(prNum) prNum.readOnly = true;
-        if(prDate) prDate.readOnly = true;
-        if(prDesc) prDesc.readOnly = true;
+        title.textContent = "Delete Purchase Request";
+        prContainer.style.display = 'block';
+        
+        prField.value = selectedPRData.prNumber;
+        dateField.value = selectedPRData.date;
+        descField.value = selectedPRData.description;
+
+        dateField.readOnly = true;
+        descField.readOnly = true;
+        dateField.classList.remove('bg-light');
+        descField.classList.remove('bg-light');
+
+        saveBtn.textContent = "Delete";
+        saveBtn.className = "btn btn-danger px-4";
+        
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-secondary px-4";
     }
+
+    const modalElement = document.getElementById('createUpdateModal');
+    const myModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    myModal.show();
 }
 
 function closeModal() {
@@ -149,40 +291,6 @@ function savePurchase() {
     }
     alert('Purchase Request Saved!');
     closeModal(); 
-}
-
-function executeSearch() {
-    const input = document.getElementById('searchInput').value.toLowerCase();
-    const category = document.getElementById('searchCategory').value;
-    const table = document.getElementById('purchaseTable');
-    if (!table) return;
-    
-    const tr = table.getElementsByTagName('tr');
-    let colIndex = 0; 
-    if (category === 'prdate') colIndex = 1;
-    if (category === 'description') colIndex = 2;
-    
-    for (let i = 1; i < tr.length; i++) { 
-        let td = tr[i].getElementsByTagName('td')[colIndex];
-        if (td) {
-            let txtValue = td.textContent || td.innerText;
-            tr[i].style.display = txtValue.toLowerCase().indexOf(input) > -1 ? "" : "none";
-        }       
-    }
-}
-
-function updateSearchType() {
-    const category = document.getElementById('searchCategory').value;
-    const searchInput = document.getElementById('searchInput');
-    if (!searchInput) return;
-    
-    searchInput.value = ''; 
-    executeSearch();
-
-    if (category === 'prnumber') { searchInput.type = 'number'; } 
-    else if (category === 'prdate') { searchInput.type = 'date'; } 
-    else { searchInput.type = 'text'; }
-    searchInput.placeholder = 'Search...';
 }
 
 // === ITEM INVENTORY LOGIC ===
@@ -246,36 +354,6 @@ function saveItemRecord() {
     tbody.appendChild(row);
     alert("Item Record Saved!");
     closeItemModal();
-}
-
-function executeItemSearch() {
-    const input = document.getElementById('itemSearchInput').value.toLowerCase();
-    const colIndex = document.getElementById('itemSearchCategory').value;
-    const table = document.getElementById('itemTable');
-    if (!table) return;
-    
-    const tr = table.getElementsByTagName('tr');
-    for (let i = 1; i < tr.length; i++) {
-        let td = tr[i].getElementsByTagName('td')[colIndex];
-        if (td) {
-            let txtValue = td.textContent || td.innerText;
-            tr[i].style.display = txtValue.toLowerCase().indexOf(input) > -1 ? "" : "none";
-        }
-    }
-}
-
-function updateItemSearchType() {
-    const category = document.getElementById('itemSearchCategory').value;
-    const searchInput = document.getElementById('itemSearchInput');
-    if (!searchInput) return;
-
-    searchInput.value = ''; 
-    executeItemSearch();
-
-    if (category === '0') { searchInput.type = 'number'; } 
-    else if (category === '3') { searchInput.type = 'date'; } 
-    else { searchInput.type = 'text'; }
-    searchInput.placeholder = 'Search...';
 }
 
 // === MONITORING ITEM STATUS LOGIC ===
@@ -364,3 +442,17 @@ function updateMonSearchType() {
     else { searchInput.type = 'text'; }
     searchInput.placeholder = 'Search...'; 
 }
+
+// === INITIALIZE DATATABLES ===
+$(document).ready(function() {
+    $('#purchaseTable').DataTable({
+        "scrollX": true,
+        "order": [[1, "desc"]],
+        "autoWidth": false,
+        "columnDefs": [
+            { "width": "20%", "targets": 0 },
+            { "width": "20%", "targets": 1 },
+            { "width": "60%", "targets": 2 },
+        ]
+    });
+});

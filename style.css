@@ -272,8 +272,6 @@ body.dashboard-body {
     width: 300px;
     background-color: #e6e6e6;
     box-shadow: 4px 0 10px rgba(0,0,0,0.3);
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -588,9 +586,6 @@ input[readonly], textarea[readonly], select[disabled] {
     cursor: not-allowed; 
 }
 
-input[type="date"] { font-size: 24px !important; }
-input[type="date"]::-webkit-calendar-picker-indicator { transform: scale(1.4); cursor: pointer; margin-right: 8px; }
-
 [data-action="delete"] .purchase-panel .save-btn { background-color: #dc3545; }
 [data-action="delete"] .purchase-panel .save-btn:hover { background-color: #b02a37; }
 [data-action="delete"] .purchase-panel .cancel-btn { background-color: #a6a6a6; color: #333333; }
@@ -613,6 +608,27 @@ input[type="date"]::-webkit-calendar-picker-indicator { transform: scale(1.4); c
 #monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 35%; }
 #monitorTable th:nth-child(3), #monitorTable td:nth-child(3) { width: 20%; }
 #monitorTable th:nth-child(4), #monitorTable td:nth-child(4) { width: 20%; }
+
+/* ============================================================== */
+/* INTERACTIVE STATES (Selected Rows & Disabled Buttons)          */
+/* ============================================================== */
+.action-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    filter: grayscale(100%) !important;
+    pointer-events: none !important;
+}
+
+tr.table-active td {
+    background-color: #cce5ff !important;
+    color: #000000 !important;
+    font-weight: bold;
+}
+
+body.dark-mode tr.table-active td {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+}
 
 /* ============================================================== */
 /* DARK MODE THEME & GLOW EFFECTS                                 */
@@ -684,3 +700,378 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 
 .dark-mode .btn-delete { background-color: transparent; color: #ef4444; border-color: #ef4444; }
 .dark-mode .btn-delete:hover { background-color: #ef4444; color: #0f172a; box-shadow: 0 0 15px #ef4444; }
+
+/* ============================================================== */
+/* NEW MODERN CARD LAYOUT                                         */
+/* ============================================================== */
+
+.data-table-main {
+    background-color: #e2e2e2;
+    min-height: calc(100vh - 110px);
+    padding: 30px;
+}
+
+.modern-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 25px 30px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    width: 100%;
+}
+
+.modern-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-title-orange {
+    color: #ff9800;
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 26px;
+    margin: 0;
+    text-transform: none;
+    text-shadow: none;
+    border: none;
+}
+
+.card-desc {
+    color: #6c757d;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-style: italic;
+    margin: 5px 0 0 0;
+}
+
+.card-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-modern {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+}
+
+.btn-add-modern {
+    background-color: #28a745;
+}
+
+.btn-add-modern:hover {
+    background-color: #218838;
+    transform: scale(1.02);
+}
+
+.btn-edit-modern {
+    background-color: #ffc107;
+    color: #000000;
+}
+
+.btn-edit-modern:hover {
+    background-color: #e0a800;
+    transform: scale(1.02);
+}
+
+.btn-delete-modern {
+    background-color: #dc3545;
+}
+
+.btn-delete-modern:hover {
+    background-color: #c82333;
+    transform: scale(1.02);
+}
+
+.btn-modern:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    filter: grayscale(80%);
+}
+
+.modern-table-wrapper table th {
+    background-color: #d1d5db !important;
+    color: #000000 !important;
+    border: 1px solid #9ca3af !important;
+    position: static;
+}
+
+.modern-table-wrapper table td {
+    border: 1px solid #9ca3af !important;
+}
+
+#purchaseTable {
+    margin-bottom: 20px !important;
+}
+
+/* ============================================================== */
+/* NEW HEADER & SIDEBAR LAYOUT                                    */
+/* ============================================================== */
+
+.concept-header {
+    background-color: #114a91;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 100;
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.hamburger-modern {
+    font-size: 22px;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding-right: 15px;
+}
+
+.hamburger-modern:hover {
+    color: #ffc107;
+}
+
+.header-tab-name {
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: normal;
+    margin: 0;
+}
+
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+}
+
+.profile-icon {
+    font-size: 26px;
+}
+
+.fullscreen-icon {
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.concept-sidebar {
+    background-color: #e2e2e2;
+    padding-top: 0;
+}
+
+.sidebar-logo-box {
+    background-color: #5a6b7d;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    padding: 15px;
+}
+
+.sidebar-logo-box .logo-text {
+    color: #ffffff;
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
+
+.close-btn-mobile {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    color: #ffffff;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.concept-sidebar .nav-item {
+    border-left: 5px solid transparent;
+    margin-bottom: 5px;
+}
+
+.concept-sidebar .nav-item.active-nav {
+    background-color: #ffffff;
+    border-left: 5x solid #ffc107; 
+}
+
+.sidebar-spacer {
+    flex-grow: 1;
+}
+
+/* ============================================================== */
+/* NEW POLISH: OVERLAY, DROPDOWN, AND SIDEBAR REFINEMENTS         */
+/* ============================================================== */
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.user-profile-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.user-profile-container:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.header-username {
+    font-size: 18px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+}
+
+.dropdown-arrow {
+    font-size: 14px;
+    margin-left: -5px;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 15px);
+    right: 0;
+    background-color: #ffffff;
+    color: #333333;
+    width: 260px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rbga(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    z-index: 2000;
+    overflow: hidden;
+    cursor: default;
+    border: 1px solid #e2e2e2;
+}
+
+.profile-dropdown.show {
+    display: flex;
+}
+
+.profile-dropdown .dropdown-header {
+    background-color: #f4f6f9;
+    padding: 20px 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.profile-dropdown .dropdown-header strong {
+    font-size: 17px;
+    color: #114a91;
+    font-family: 'Arial Black', Arial, sans-serif;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.profile-dropdown .dropdown-header span {
+    font-size: 13px;
+    color: #666;
+    margin-top: 3px;
+    font-family: Arial, sans-serif;
+    background-color: #e2e8f0;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.dropdown-body {
+    padding: 15px;
+    font-size: 14px;
+    line-height: 1.8;
+    font-family: Arial, sans-serif;
+}
+
+.dropdown-body p {
+    margin: 0;
+}
+
+.dropdown-footer {
+    padding: 15px;
+    border-top: 1px solid #ddd;
+    background-color: #fafafa;
+}
+
+.dropdown-logout {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background-color: #dc3545;
+    color: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Arial Black', Arial, sans-serif;
+    transition: background-color 0.2s;
+}
+
+.dropdown-logout:hover {
+    background-color: #c82333;
+}
+
+.sidebar-brand-logo {
+    max-width: 85%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.concept-sidebar .nav-item {
+    font-family: 'Arial Black', Arial, sans-serif;
+}
+
+.concept-sidebar .nav-text {
+    font-size: 15px;
+}
+
+.concept-sidebar .nav-icon {
+    font-size: 20px;
+    width: 30px;
+    text-align: center;
+}
+
+.dark-mode .concept-sidebar .nav-item.active-nav {
+    background-color: #1e293b;
+    border-left: 5px solid #f59e0b;
+    color: #38bdf8;
+}
