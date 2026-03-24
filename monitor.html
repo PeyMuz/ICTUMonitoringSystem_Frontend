@@ -2,111 +2,237 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Monitoring Item Status - ICTU Monitoring</title>
+    <title>Item Status - ICTU Inventory Monitoring System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 </head>
-<body onload="loadUser()" class="dashboard-body">
+<body onload="loadUser()" class="dashboard-body theme-status">
 
-    <header class="dash-header purchase-header">
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <header class="concept-header">
         <div class="header-left">
-            <img src="depedncr.png" alt="NCR Logo" class="logo-circle">
-            <img src="Deeep.png" alt="DepEd Logo" class="logo-text">
-            <div class="header-divider"></div>
-            <div class="header-titles">
-                <h2>Department of Education - NCR</h2>
-                <h3>ICTU Monitoring Supplies</h3>
+            <div class="hamburger-modern" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
             </div>
+            <h1 class="header-tab-name">Item Status</h1>
         </div>
-        
-        <div class="toolbar-actions">
-            <input type="number" id="monSearchInput" class="toolbar-input" placeholder="Search..." oninput="executeMonSearch()">
-            <select id="monSearchCategory" class="toolbar-dropdown" onchange="updateMonSearchType()">
-                <option value="0">Purchase Number</option>
-                <option value="1">Item Name</option>
-                <option value="2">Status</option>
-                <option value="3">Date Checked</option>
-            </select>
-            <button class="action-btn btn-search" onclick="executeMonSearch()">Search</button>
-            <button class="action-btn btn-add" onclick="openMonModal('add')">Add</button>
-            <button class="action-btn btn-edit" onclick="openMonModal('edit')">Edit</button>
-            <button class="action-btn btn-delete" onclick="openMonModal('delete')">Delete</button>
+
+        <div class="header-right">
+            <div class="user-profile-container" onclick="toggleProfileDropdown()">
+                <i class="fa-solid fa-circle-user profile-icon"></i>
+                <span id="displayHeaderName" class="header-username">[Username Here]</span>
+                <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+
+                <div id="profileDropdown" class="profile-dropdown">
+                    <div class="dropdown-header">
+                        <strong id="dropName">Name Here</strong>
+                        <span id="dropRole">Role Here</span>
+                    </div>
+                    <div class="dropdown-body">
+                        <p><strong>Division:</strong> <span id="dropDiv">NCR</span></p>
+                        <p><strong>Section:</strong> <span id="dropSec">ICTU</span></p>
+                    </div>
+                    <div class="dropdown-footer">
+                        <button class="dropdown-logout" onclick="logout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <i class="fa-solid fa-expand fullscreen-icon" onclick="toggleFullscreen()"></i>
         </div>
     </header>
 
-    <div class="red-bar">
-        <div class="hamburger" onclick="toggleSidebar()">
-            <span></span><span></span><span></span>
+    <nav id="sidebar" class="sidebar concept-sidebar">
+        <div class="sidebar-logo-box">
+            <img src="Deeep.png" alt="DepEd Logo" class="sidebar-brand-logo">
+            <div class="close-btn-mobile" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
         </div>
-    </div>
 
-    <nav id="sidebar" class="sidebar">
-        <div class="close-btn" onclick="toggleSidebar()"><i class="fa-solid fa-arrow-left"></i></div>
-        <div class="sidebar-user">
-            <i class="fa-solid fa-circle-user user-icon"></i>
-            <span id="displaySidebarName">[Name of the User]</span>
+        <div class="sidebar-system-badge">
+            <span>ICTU Inventory<br>Monitoring System</span>
         </div>
-        <a href="item.html" class="nav-item"><i class="fa-solid fa-file-signature nav-icon"></i><span class="nav-text">Inventory Items</span></a>
-        <a href="purchase.html" class="nav-item"><i class="fa-solid fa-hand-holding-dollar nav-icon"></i><span class="nav-text">Purchase Requests</span></a>
-        <a href="monitor.html" class="nav-item"><i class="fa-solid fa-magnifying-glass-chart nav-icon"></i><span class="nav-text">Item Status</span></a>
-        
+
+        <a href="purchase.html" class="nav-item">
+            <i class="fa-solid fa-hand-holding-dollar nav-icon"></i>
+            <span class="nav-text">Purchase Requests</span>
+        </a>
+
+        <a href="item.html" class="nav-item">
+            <i class="fa-solid fa-file-signature nav-icon"></i>
+            <span class="nav-text">Inventory Items</span>
+        </a>
+
+        <a href="monitor.html" class="nav-item">
+            <i class="fa-solid fa-magnifying-glass-chart nav-icon"></i>
+            <span class="nav-text">Item Status</span>
+        </a>
+
+        <div class="sidebar-spacer"></div>
+
         <a href="#" class="nav-item" onclick="toggleTheme(); return false;">
             <i class="fa-solid fa-moon nav-icon" id="themeIcon"></i>
             <span class="nav-text" id="themeText">Dark Mode</span>
         </a>
-        
-        <button class="logout-btn" onclick="logout()">LOG OUT</button>
     </nav>
 
     <main class="data-table-main">
-        <h2 class="table-main-title">Item Status</h2>
-        <div class="table-container large-table">
-            <table id="monitorTable">
-                <thead>
-                    <tr>
-                        <th>Purchase Number</th>
-                        <th>Item Name</th>
-                        <th>Status</th>
-                        <th>Date Checked</th>
-                    </tr>
-                </thead>
-                <tbody id="monitorBody"></tbody>
-            </table>
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <div class="title-area">
+                    <h2 class="card-title-custom" style="font-family: 'Arial Black', sans-serif; margin: 0; font-size: 26px;">Item Status List</h2>
+                    <p class="card-desc" style="color: #6c757d; font-style: italic; margin-top: 5px;">Monitor the condition and assignments of inventory items</p>
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn-modern btn-add-modern" onclick="openMonModal('add')">
+                        <i class="fa-solid fa-circle-plus"></i> Add
+                    </button>
+                    <button class="btn-modern btn-edit-modern" id="btnEditMonAction" onclick="openMonModal('edit')" disabled>
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button class="btn-modern btn-delete-modern" id="btnDeleteMonAction" onclick="openMonModal('delete')" disabled>
+                        <i class="fa-solid fa-trash-can"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            <div class="modern-table-wrapper">
+                <table id="monitorTable" class="table table-bordered table-striped" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Assigned ID</th>
+                            <th>Item Serial</th>
+                            <th>Item Name</th>
+                            <th>Personnel Name</th>
+                            <th>Division</th>
+                            <th>Section</th>
+                            <th>Date Awarded</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monitorBody">
+                        <tr>
+                            <td>1</td>
+                            <td>1000-001</td>
+                            <td>Dell Optiplex 7000</td>
+                            <td>Juan Dela Cruz</td>
+                            <td>NCR</td>
+                            <td>ICT</td>
+                            <td>2026-03-24</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="monModal" class="modal-overlay">
-            <div class="purchase-panel">
-                <div class="form-row">
-                    <label>Purchase Number:</label>
-                    <input type="number" id="monPr" placeholder="Enter purchase number..." onclick="makeEditable('monPr')" readonly>
-                </div>
-                <div class="form-row">
-                    <label>Item Name:</label>
-                    <input type="text" id="monItem" placeholder="Enter item name..." onclick="makeEditable('monItem')" readonly>
-                </div>
-                <div class="form-row">
-                    <label>Status:</label>
-                    <select id="monStatus" class="toolbar-dropdown" style="flex-grow:1; height:55px;">
-                        <option>Working</option>
-                        <option>Under Repair</option>
-                        <option>Missing</option>
-                        <option>Retired</option>
-                        <option>Concerned</option>
-                        <option>Returned</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <label>Date Checked:</label>
-                    <input type="date" id="monDate" onclick="makeEditable('monDate')" readonly>
-                </div>
+        <div class="modal fade" id="monActionModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title fw-bold" id="monModalTitle">Add Status Record</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-                <div class="panel-footer">
-                    <button class="cancel-btn" onclick="closeMonModal()">Cancel</button>
-                    <button class="save-btn" id="monActionBtn" onclick="saveMonRecord()">Save Changes</button>
+                    <div class="modal-body">
+                        <div class="mb-3" id="monIdContainer">
+                            <label class="form-label fw-bold">Assigned ID:</label>
+                            <input type="text" class="form-control" id="modalMonId" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Item Serial:</label>
+                            <input type="text" class="form-control" id="modalMonSerial" placeholder="Enter Item Serial...">
+                        </div>
+
+                        <div class="mb-3" id="monNameContainer">
+                            <label class="form-label fw-bold">Item Name:</label>
+                            <input type="text" class="form-control" id="modalMonName" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Personnel Name:</label>
+                            <input type="text" class="form-control" id="modalMonPersonnel" placeholder="Enter Personnel Name...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Division:</label>
+                            <select class="form-select" id="modalMonDivision">
+                                <option value="NCR" selected>NCR</option>
+                                <option value="Caloocan City">Caloocan City</option>
+                                <option value="Las Piñas City">Las Piñas City</option>
+                                <option value="Makati City">Makati City</option>
+                                <option value="Malabon City">Malabon City</option>
+                                <option value="Mandaluyong City">Mandaluyong City</option>
+                                <option value="Manila">Manila</option>
+                                <option value="Marikina City">Marikina City</option>
+                                <option value="Muntinlupa City">Muntinlupa City</option>
+                                <option value="Navotas City">Navotas City</option>
+                                <option value="Parañaque City">Parañaque City</option>
+                                <option value="Pasay City">Pasay City</option>
+                                <option value="Pasig City">Pasig City</option>
+                                <option value="Quezon City">Quezon City</option>
+                                <option value="San Juan City">San Juan City</option>
+                                <option value="Taguig City - Pateros">Taguig City - Pateros</option>
+                                <option value="Valenzuela City">Valenzuela City</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Section:</label>
+                            <select class="form-select" id="modalMonSection">
+                                <option value="ICT" selected>ICT</option>
+                                <option value="ORD">ORD</option>
+                                <option value="ARD">ARD</option>
+                                <option value="LEGAL">LEGAL</option>
+                                <option value="PAU">PAU</option>
+                                <option value="LRPS">LRPS</option>
+                                <option value="CLMD">CLMD</option>
+                                <option value="LRMS">LRMS</option>
+                                <option value="ESSD">ESSD</option>
+                                <option value="SHNU">SHNU</option>
+                                <option value="QAD">QAD</option>
+                                <option value="FTAD">FTAD</option>
+                                <option value="PPRD">PPRD</option>
+                                <option value="HRDD">HRDD</option>
+                                <option value="NEAP">NEAP</option>
+                                <option value="ASD">ASD</option>
+                                <option value="RPSU">RPSU</option>
+                                <option value="PERSONNEL">PERSONNEL</option>
+                                <option value="RECORDS">RECORDS</option>
+                                <option value="AMS">AMS</option>
+                                <option value="CASH">CASH</option>
+                                <option value="PROCUREMENT">PROCUREMENT</option>
+                                <option value="FINANCE">FINANCE</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Date Awarded:</label>
+                            <input type="date" class="form-control" id="modalMonDate">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-danger px-4" id="btnCancelMon" onclick="closeMonModal()">Close</button>
+                        <button type="button" class="btn btn-success px-4" id="btnSaveMon" onclick="saveMonRecord()">Save</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div id="toastContainer" class="toast-container-custom"></div>
+
     </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     <script src="index.js"></script>
 </body>

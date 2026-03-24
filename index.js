@@ -113,6 +113,7 @@ function loadUser () {
     applyTheme();
     setupRowHighlight();
     setupItemRowHighlight();
+    setupMonRowHighlight();
     setupActiveSidebar();
 
     const activeUserStr = localStorage.getItem('activeUser');
@@ -499,91 +500,207 @@ function saveItemRecord() {
     closeItemModal();
 }
 
-// === MONITORING ITEM STATUS LOGIC ===
-function openMonModal(type) {
-    const modal = document.getElementById('monModal');
-    if (!modal) return;
+// === ITEM STATUS LOGIC ===
+let selectedMonData = null;
 
-    modal.style.display = 'flex';
-    modal.setAttribute('data-action', type);
+function setupMonRowHighlight() {
+    const tbody = document.getElementById('monitorBody');
+    const btnEdit = document.getElementById('btnEditMonAction');
+    const btnDelete = document.getElementById('btnDeleteMonAction');
 
-    const actionBtn = document.getElementById('monActionBtn');
-    const prInput = document.getElementById('monPr');
-    const statusDropdown = document.getElementById('monStatus');
+    if (!tbody) return;
 
-    prInput.value = "";
-    document.getElementById('monItem').value = "";
-    document.getElementById('monDate').value = "";
+    tbody.addEventListener('click', function(e) {
+        const targetRow = e.target.closest('tr');
+        if (!targetRow) return;
 
-    if (type === 'add') {
-        actionBtn.innerText = 'Save Changes';
-        unlockMonFields(false);
-        statusDropdown.disabled = false;
-    } else if (type === 'edit') {
-        actionBtn.innerText = 'Update Record';
-        unlockMonFields(false);
-        prInput.readOnly = true; 
-        statusDropdown.disabled = false;
-    } else if (type === 'delete') {
-        actionBtn.innerText = 'Delete Record';
-        unlockMonFields(true);
-        statusDropdown.disabled = true;
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+
+        targetRow.classList.add('table-active');
+        btnEdit.disabled = false;
+        btnDelete.disabled = false;
+
+        const cells = targetRow.querySelectorAll('td');
+        selectedMonData = {
+            id: cells[0].innerText,
+            serial: cells[1].innerText,
+            name: cells[2].innerText,
+            personnel: cells[3].innerText,
+            division: cells[4].innerText,
+            section: cells[5].innerText,
+            date: cells[6].innerText
+        };
+    });
+
+    document.addEventListener('click', function(e) {
+        if (tbody.contains(e.target) || e.target.closest('#btnEditMonAction') || e.target.closest('#btnDeleteMonAction') || e.target.closest('.modal')) { return; }
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+        btnEdit.disabled = true;
+        btnDelete.disabled = true;
+        selectedMonData = null;
+    });
+}
+
+function openMonModal(actionType) {
+    document.getElementById('monActionModal').setAttribute('data-current-action', actionType);
+
+    const title = document.getElementById('monModalTitle');
+    
+    const idContainer = document.getElementById('monIdContainer');
+    const nameContainer = document.getElementById('monNameContainer');
+    
+    const idField = document.getElementById('modalMonId');
+    const serialField = document.getElementById('modalMonSerial');
+    const nameField = document.getElementById('modalMonName');
+    const personnelField = document.getElementById('modalMonPersonnel');
+    const divisionField = document.getElementById('modalMonDivision');
+    const sectionField = document.getElementById('modalMonSection');
+    const dateField = document.getElementById('modalMonDate');
+    
+    const saveBtn = document.getElementById('btnSaveMon');
+    const cancelBtn = document.getElementById('btnCancelMon');
+
+    [serialField, personnelField, divisionField, sectionField, dateField].forEach(el => { el.readOnly = false; el.disabled = false; });
+
+    if (actionType === 'add') {
+        title.textContent = "Add Status Record";
+        idContainer.style.display = 'none'; 
+        nameContainer.style.display = 'none';
+        
+        serialField.value = ""; personnelField.value = ""; divisionField.value = "NCR"; sectionField.value = "ICT"; dateField.value = "";
+        
+        saveBtn.textContent = "Save";
+        saveBtn.className = "btn btn-success px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+        
+    } else if (actionType === 'edit') {
+        title.textContent = "Edit Status Record";
+        idContainer.style.display = 'block';
+        nameContainer.style.display = 'block'; 
+        
+        idField.value = selectedMonData.id;
+        serialField.value = selectedMonData.serial;
+        nameField.value = selectedMonData.name;
+        personnelField.value = selectedMonData.personnel;
+        divisionField.value = selectedMonData.division;
+        sectionField.value = selectedMonData.section;
+        dateField.value = selectedMonData.date;
+        
+        serialField.readOnly = true;
+
+        saveBtn.textContent = "Save Changes";
+        saveBtn.className = "btn btn-success px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+
+    } else if (actionType === 'delete') {
+        title.textContent = "Delete Status Record";
+        idContainer.style.display = 'block';
+        nameContainer.style.display = 'block';
+        
+        idField.value = selectedMonData.id;
+        serialField.value = selectedMonData.serial;
+        nameField.value = selectedMonData.name;
+        personnelField.value = selectedMonData.personnel;
+        divisionField.value = selectedMonData.division;
+        sectionField.value = selectedMonData.section;
+        dateField.value = selectedMonData.date;
+
+        [serialField, personnelField, dateField].forEach(el => el.readOnly = true);
+        [divisionField, sectionField].forEach(el => el.disabled = true);
+
+        saveBtn.textContent = "Delete";
+        saveBtn.className = "btn btn-danger px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-secondary px-4";
     }
+
+    const modalElement = document.getElementById('monActionModal');
+    const myModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    myModal.show();
 }
 
-function closeMonModal() { document.getElementById('monModal').style.display = 'none'; }
-
-function unlockMonFields(isLocked) {
-    document.getElementById('monPr').readOnly = isLocked;
-    document.getElementById('monItem').readOnly = isLocked;
-    document.getElementById('monDate').readOnly = isLocked;
+function closeMonModal() {
+    const modalElement = document.getElementById('monActionModal');
+    const myModal = bootstrap.Modal.getInstance(modalElement);
+    if (myModal) myModal.hide();
 }
+
+// --- SIMULATED DATABASE FETCH ---
+// Wrapped in an 'if' statement so it doesn't break other pages!
+    const serialInput = document.getElementById('modalMonSerial');
+    if (serialInput) {
+        serialInput.addEventListener('input', function(e) {
+            const serialVal = e.target.value.trim();
+            const nameContainer = document.getElementById('monNameContainer');
+            const nameField = document.getElementById('modalMonName');
+            const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
+
+            if (actionType === 'add') {
+                if (serialVal.length >= 4) { 
+                    nameContainer.style.display = 'block';
+                    nameField.value = `Dell Optiplex 7000 (Matched: ${serialVal})`;
+                } else {
+                    nameContainer.style.display = 'none';
+                    nameField.value = "";
+                }
+            }
+        });
+    }
 
 function saveMonRecord() {
-    const pr = document.getElementById('monPr').value;
-    const item = document.getElementById('monItem').value;
-    const status = document.getElementById('monStatus').value;
-    const date = document.getElementById('monDate').value;
+    const id = document.getElementById('modalMonId').value;
+    
+    // 1. We add .trim() to ensure spaces aren't counted as valid text!
+    const serial = document.getElementById('modalMonSerial').value.trim();
+    const name = document.getElementById('modalMonName').value.trim();
+    const personnel = document.getElementById('modalMonPersonnel').value.trim();
+    const division = document.getElementById('modalMonDivision').value;
+    const section = document.getElementById('modalMonSection').value;
+    const date = document.getElementById('modalMonDate').value;
 
-    if (!pr || !item || !date) { alert("Please fill required fields!"); return; }
+    const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
+    const table = $('#monitorTable').DataTable();
 
-    const tbody = document.getElementById('monitorBody');
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${pr}</td><td>${item}</td><td>${status}</td><td>${date}</td>`;
-    tbody.appendChild(row);
+    if (actionType === 'delete') {
+        const activeRow = document.querySelector('#monitorBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).remove().draw(false);
+            showNotification('Status Record Deleted!', 'delete');
+        }
+        document.getElementById('btnEditMonAction').disabled = true;
+        document.getElementById('btnDeleteMonAction').disabled = true;
+        selectedMonData = null;
+        closeMonModal();
+        return; 
+    }
 
-    alert("Status Record Updated!");
-    closeMonModal();
-}
+    if (!serial || !personnel || !date) {
+        showNotification("Please fill out all required fields.", 'error');
+        return;
+    }
 
-function executeMonSearch() {
-    const input = document.getElementById('monSearchInput').value.toLowerCase();
-    const colIndex = document.getElementById('monSearchCategory').value;
-    const table = document.getElementById('monitorTable');
-    if (!table) return;
+    if (actionType === 'add' && !name) {
+        showNotification("Please enter a valid Serial Number to fetch an Item.", 'error');
+        return;
+    }
 
-    const tr = table.getElementsByTagName('tr');
-    for (let i = 1; i < tr.length; i++) {
-        let td = tr[i].getElementsByTagName('td')[colIndex];
-        if (td) {
-            let txtValue = td.textContent || td.innerText;
-            tr[i].style.display = txtValue.toLowerCase().indexOf(input) > -1 ? "" : "none";
+    if (actionType === 'add') {
+        table.row.add(["TBD", serial, name, personnel, division, section, date]).draw(false);
+        showNotification('Status Record Added!', 'success');
+        
+    } else if (actionType === 'edit') {
+        const activeRow = document.querySelector('#monitorBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).data([id, serial, selectedMonData.name, personnel, division, section, date]).draw(false);
+            showNotification('Status Record Updated!', 'success');
         }
     }
-}
-
-function updateMonSearchType() {
-    const category = document.getElementById('monSearchCategory').value;
-    const searchInput = document.getElementById('monSearchInput');
-    if (!searchInput) return;
-
-    searchInput.value = '';
-    executeMonSearch();
-
-    if (category === '0') { searchInput.type = 'number'; } 
-    else if (category === '3') { searchInput.type = 'date'; } 
-    else { searchInput.type = 'text'; }
-    searchInput.placeholder = 'Search...'; 
+    
+    closeMonModal();
 }
 
 // === INITIALIZE DATATABLES ===
@@ -609,6 +726,21 @@ $(document).ready(function() {
             { "width": "12%", "targets": 2, "className": "text-center" },
             { "width": "12%", "targets": 3, "className": "text-center" },
             { "width": "39%", "targets": 4, "className": "text-start" }
+        ]
+    });
+
+    $('#monitorTable').DataTable({
+        "scrollX": true,
+        "order": [[6, "desc"]],
+        "autoWidth": false,
+        "columnDefs": [
+            { "width": "8%", "targets": 0, "className": "text-center" },
+            { "width": "14%", "targets": 1, "className": "text-start" },
+            { "width": "20%", "targets": 2, "className": "text-start" },
+            { "width": "20%", "targets": 3, "className": "text-start" },
+            { "width": "14%", "targets": 4, "className": "text-center" },
+            { "width": "10%", "targets": 5, "className": "text-center" },
+            { "width": "14%", "targets": 6, "className": "text-center" }
         ]
     });
 });
@@ -652,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (event.target.tagName === 'BUTTON') return;
 
                 event.preventDefault();
-                const actionBtn = modalElement.querySelector('.btn-success, .btn-danger:not(.btn-close):not(#btnCancelModal):not(#btnCancelItem)');
+                const actionBtn = modalElement.querySelector('#btnSaveModal, #btnSaveItem, #btnSaveMon');
                 if (actionBtn) actionBtn.click();
             }
         });
@@ -683,6 +815,7 @@ document.addEventListener('keydown', function(event) {
         
         if (typeof selectedPRData !== 'undefined') selectedPRData = null;
         if (typeof selectedItemData !== 'undefined') selectedItemData = null;
+        if (typeof selectedMonData !== 'undefined') selectedMonData = null;
 
         toggleSidebar();
         return;
@@ -696,6 +829,7 @@ document.addEventListener('keydown', function(event) {
         event.preventDefault();
         if (document.getElementById('purchaseTable')) openModal('add');
         if (document.getElementById('itemTable')) openItemModal('add');
+        if (document.getElementById('monitorTable')) openMonModal('add');
         return;
     }
 
@@ -703,6 +837,7 @@ document.addEventListener('keydown', function(event) {
         if (!isModalOpen) {
             if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('edit'); }
             if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('edit'); }
+            if (selectedMonData && document.getElementById('monitorTable')) { event.preventDefault(); openMonModal('edit'); }
         }
         return;
     }
@@ -711,7 +846,9 @@ document.addEventListener('keydown', function(event) {
         if (!isModalOpen) {
             if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('delete'); }
             if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('delete'); }
+            if (selectedMonData && document.getElementById('monitorTable')) { event.preventDefault(); openMonModal('delete'); }
         }
         return;
     }
+
 }, true);

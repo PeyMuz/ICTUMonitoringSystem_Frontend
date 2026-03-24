@@ -604,10 +604,13 @@ input[readonly], textarea[readonly], select[disabled] {
 #itemTable th:nth-child(4), #itemTable td:nth-child(4) { width: 12%; text-align: center !important; }
 #itemTable th:nth-child(5), #itemTable td:nth-child(5) { width: 39%; text-align: left !important; }
 
-#monitorTable th:nth-child(1), #monitorTable td:nth-child(1) { width: 25%; }
-#monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 35%; }
-#monitorTable th:nth-child(3), #monitorTable td:nth-child(3) { width: 20%; }
-#monitorTable th:nth-child(4), #monitorTable td:nth-child(4) { width: 20%; }
+#monitorTable th:nth-child(1), #monitorTable td:nth-child(1) { width: 8%; text-align: center !important; }
+#monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 14%; text-align: left !important; }
+#monitorTable th:nth-child(3), #monitorTable td:nth-child(3) { width: 20%; text-align: left !important; }
+#monitorTable th:nth-child(4), #monitorTable td:nth-child(4) { width: 20%; text-align: left !important; }
+#monitorTable th:nth-child(5), #monitorTable td:nth-child(5) { width: 14%; text-align: center !important; }
+#monitorTable th:nth-child(6), #monitorTable td:nth-child(6) { width: 10%; text-align: center !important; }
+#monitorTable th:nth-child(7), #monitorTable td:nth-child(7) { width: 14%; text-align: center !important; }
 
 /* ============================================================== */
 /* INTERACTIVE STATES (Selected Rows & Disabled Buttons)          */
