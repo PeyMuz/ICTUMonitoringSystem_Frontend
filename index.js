@@ -170,7 +170,10 @@ function setupRowHighlight() {
     });
 
     document.addEventListener('click', function(e) {
-        if (tbody.contains(e.target) || e.target.closest('#btnEditAction') || e.target.closest('#btnDeleteAction')) {
+        if (tbody.contains(e.target) || 
+            e.target.closest('#btnEditAction') || 
+            e.target.closest('#btnDeleteAction') ||
+            e.target.closest('.modal')) {
             return;
         }
 
@@ -180,10 +183,12 @@ function setupRowHighlight() {
         btnEdit.disabled = true;
         btnDelete.disabled = true;
         selectedPRData = null;
-    })
+    });
 }
 
 function openModal(actionType) {
+    document.getElementById('createUpdateModal').setAttribute('data-current-action', actionType);
+
     const title = document.getElementById('modalTitle');
     const prContainer = document.getElementById('prFieldContainer');
     const prField = document.getElementById('modalPrField');
@@ -254,15 +259,16 @@ function openModal(actionType) {
 }
 
 function closeModal() {
-    const modal = document.getElementById('actionModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.getElementById('prnumber').value = '';
-        document.getElementById('prdate').value = '';
-        document.getElementById('description').value = '';
-        resetFields();
+    const modalElement = document.getElementById('createUpdateModal');
+    const myModal = bootstrap.Modal.getInstance(modalElement);
+    if (myModal) {
+        myModal.hide();
     }
-}
+
+    if (document.getElementById('modalPrField')) document.getElementById('modalPrField').value = '';
+    if (document.getElementById('modalDateField')) document.getElementById('modalDateField').value = '';
+    if (document.getElementById('modalDescField')) document.getElementById('modalDescField').value = '';
+} 
 
 function resetFields() {
     const pr = document.getElementById('prnumber');
@@ -274,23 +280,51 @@ function resetFields() {
 }
 
 function savePurchase() {
-    let pr = document.getElementById('prnumber').value;
-    const dateVal = document.getElementById('prdate').value; 
-    const desc = document.getElementById('description').value;
-    const prRow = document.getElementById('prRow');
-    const isAddMode = prRow && prRow.style.display === 'none';
-    
-    if ((!isAddMode && !pr) || !dateVal || !desc) { alert("Please fill out all required fields."); return; }
-    if (isAddMode) pr = "TBD"; 
-    
-    const tbody = document.getElementById('purchaseBody');
-    if (tbody) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${pr}</td><td>${dateVal}</td><td>${desc}</td>`;
-        tbody.appendChild(row);
+    const pr = document.getElementById('modalPrField').value;
+    const dateVal = document.getElementById('modalDateField').value;
+    const desc = document.getElementById('modalDescField').value;
+
+    const actionType = document.getElementById('createUpdateModal').getAttribute('data-current-action');
+    const table = $('#purchaseTable').DataTable();
+
+    if (actionType === 'delete') {
+        const activeRow = document.querySelector('#purchaseBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).remove().draw(false);
+            showNotification('Purchase Request Deleted!', 'delete');
+        }
+
+        document.getElementById('btnEditAction').disabled = true;
+        document.getElementById('btnDeleteAction').disabled = true;
+        selectedPRData = null;
+
+        closeModal();
+        return; 
     }
-    alert('Purchase Request Saved!');
-    closeModal(); 
+
+    if ((actionType === 'edit' && !pr) || !dateVal || !desc) {
+        showNotification("Please fill out all required fields.", 'error');
+        return;
+    }
+
+    if (actionType === 'add') {
+        table.row.add([
+            "TBD",
+            dateVal,
+            desc
+        ]).draw(false);
+        showNotification('Purchase Request Added!', 'success');
+    } 
+
+    else if (actionType === 'edit') {
+        const activeRow = document.querySelector('#purchaseBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).data([pr, dateVal, desc]).draw(false);
+            showNotification('Purchase Request Updated!', 'success');
+        }
+    }
+
+    closeModal();
 }
 
 // === ITEM INVENTORY LOGIC ===
@@ -456,3 +490,93 @@ $(document).ready(function() {
         ]
     });
 });
+
+// === NOTIFICATIONS & KEYBOARD ===
+function showNotification(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div')
+    toast.className = `custom-toast ${type}`;
+
+    let icon = 'fa-circle-check';
+    let iconColor = '#28a745';
+    if (type === 'error') {
+        icon = 'fa-circle-exclamation';
+        iconColor = '#dc3545';
+    }
+    if (type === 'delete') {
+        icon = 'fa-trash-can';
+        iconColor = '#ff9800';
+    }
+
+    toast.innerHTML = `<i class="fa-solid ${icon}" style="color: ${iconColor}; font-size: 18px;"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 500);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modalElement = document.getElementById('createUpdateModal');
+    if (modalElement) {
+        modalElement.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                
+                if (event.target.tagName === 'TEXTAREA') return;
+
+                if (event.target.tagName === 'BUTTON') return;
+
+                event.preventDefault();
+                document.getElementById('btnSaveModal').click();
+            }
+        });
+    }
+});
+
+// === GLOBAL KEYBOARD SHORTCUTS ===
+document.addEventListener('keydown', function(event) {
+    const activeTag = document.activeElement.tagName.toLowerCase();
+    const isTyping = activeTag === 'input' || activeTag === 'textarea';
+    const isModalOpen = document.body.classList.contains('modal-open');
+
+    if (event.key === 'Escape') {
+        if (isModalOpen) {
+            if (isTyping) {
+                event.stopPropagation();
+            }
+
+            return; 
+        }
+
+        toggleSidebar();
+        return;
+    }
+
+    if (isTyping) return;
+
+    if (event.key === '+') {
+        event.preventDefault();
+        openModal('add');
+        return;
+    }
+
+    if (event.key === 'Enter') {
+        if (selectedPRData && !isModalOpen) {
+            event.preventDefault();
+            openModal('edit');
+        }
+        return;
+    }
+
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+        if (selectedPRData && !isModalOpen) {
+            event.preventDefault();
+            openModal('delete');
+        }
+        return;
+    }
+}, true);
