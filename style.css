@@ -594,15 +594,15 @@ input[readonly], textarea[readonly], select[disabled] {
 /* ============================================================== */
 /* TABLE COLUMN WIDTHS                                            */
 /* ============================================================== */
-#purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 20%; }
-#purchaseTable th:nth-child(2), #purchaseTable td:nth-child(2) { width: 20%; }
-#purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 60%; }
+#purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 20%; text-align: left !important; }
+#purchaseTable th:nth-child(2), #purchaseTable td:nth-child(2) { width: 20%; text-align: center !important; }
+#purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 60%; text-align: left !important; }
 
-#itemTable th:nth-child(1), #itemTable td:nth-child(1) { width: 15%; }
-#itemTable th:nth-child(2), #itemTable td:nth-child(2) { width: 25%; }
-#itemTable th:nth-child(3), #itemTable td:nth-child(3) { width: 12%; }
-#itemTable th:nth-child(4), #itemTable td:nth-child(4) { width: 13%; }
-#itemTable th:nth-child(5), #itemTable td:nth-child(5) { width: 35%; text-align: center; }
+#itemTable th:nth-child(1), #itemTable td:nth-child(1) { width: 12%; text-align: left !important; }
+#itemTable th:nth-child(2), #itemTable td:nth-child(2) { width: 25%; text-align: left !important; }
+#itemTable th:nth-child(3), #itemTable td:nth-child(3) { width: 12%; text-align: center !important; }
+#itemTable th:nth-child(4), #itemTable td:nth-child(4) { width: 12%; text-align: center !important; }
+#itemTable th:nth-child(5), #itemTable td:nth-child(5) { width: 39%; text-align: left !important; }
 
 #monitorTable th:nth-child(1), #monitorTable td:nth-child(1) { width: 25%; }
 #monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 35%; }
@@ -698,10 +698,14 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 
 .dark-mode .modal-body label { color: #e2e8f0; }
 .dark-mode .modal-body input, 
-.dark-mode .modal-body textarea {
+.dark-mode .modal-body textarea,
+.dark-mode .modal-body select {
     background-color: #0f172a;
     color: #e2e8f0;
     border: 1px solid #475569;
+}
+.dark-mode .modal-body select option {
+    background-color: #0f172a;
 }
 
 .dark-mode .modal-body input:focus, 
@@ -717,6 +721,13 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
     background-color: #1e293b !important; 
     color: #64748b !important;            
     border: 1px dashed #475569 !important; 
+}
+
+.dark-mode .modal-body select[disabled] {
+    background-color: #1e293b !important; 
+    color: #64748b !important;            
+    border: 1px dashed #475569 !important; 
+    opacity: 1 !important;       
 }
 
 .dark-mode .modal-body input::placeholder, 
@@ -847,10 +858,6 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 
 .modern-table-wrapper table td {
     border: 1px solid #9ca3af !important;
-}
-
-#purchaseTable {
-    margin-bottom: 20px !important;
 }
 
 /* ============================================================== */
@@ -1197,4 +1204,80 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 .dark-mode .sidebar-system-badge span {
     background-color: #334155;
     color: #94a3b8;
+}
+
+/* ============================================================== */
+/* PAGE THEMES (Custom Headers & Titles)                          */
+/* ============================================================== */
+
+body:not(.dark-mode).theme-inventory .concept-header { background-color: #1b5e20; }
+.theme-inventory .card-title-custom { color: #2e7d32; }
+.dark-mode.theme-inventory .card-title-custom { color: #4ade80; }
+
+body:not(.dark-mode).theme-purchase .concept-header { background-color: #114a91; }
+.theme-purchase .card-title-custom { color: #114a91; }
+.dark-mode.theme-purchase .card-title-custom { color: #38bdf8; }
+
+body:not(.dark-mode).theme-status .concept-header { background-color: #d84315; }
+.theme-status .card-title-custom { color: #d84315; }
+.dark-mode.theme-status .card-title-custom { color: #fb923c; }
+
+/* ============================================================== */
+/* STATUS BADGES                                                  */
+/* ============================================================== */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #ffffff;
+    display: inline-block;
+    letter-spacing: 0.5px;
+}
+.status-working { background-color: #198754; }    /* Green */
+.status-repair { background-color: #fd7e14; }     /* Orange */
+.status-missing { background-color: #dc3545; }    /* Red */
+.status-condemned { background-color: #343a40; }  /* Dark Gray */
+.status-returned { background-color: #0dcaf0; color: #000; } /* Cyan */
+
+/* ============================================================== */
+/* DATATABLES FIXES (Alignment & Spacing)                         */
+/* ============================================================== */
+table.dataTable { margin-bottom: 20px !important; }
+
+.dataTables_scrollHeadInner, .dataTables_scrollHeadInner table {
+    width: 100% !important;
+}
+
+/* ============================================================== */
+/* DATATABLES ALIGNMENT & SPACING FIXES                           */
+/* ============================================================== */
+.dataTables_wrapper .dataTables_scrollBody {
+    margin-bottom: 15px !important;
+}
+
+.modern-table-wrapper table.dataTable {
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+.dataTables_scrollHeadInner, 
+.dataTables_scrollHeadInner table.dataTable {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0 !important;
+}
+
+.modern-table-wrapper table th, 
+.modern-table-wrapper table td {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle !important;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 15px !important;
 }

@@ -112,6 +112,7 @@ function logout() { localStorage.removeItem('activeUser'); window.location.href 
 function loadUser () { 
     applyTheme();
     setupRowHighlight();
+    setupItemRowHighlight();
     setupActiveSidebar();
 
     const activeUserStr = localStorage.getItem('activeUser');
@@ -328,65 +329,173 @@ function savePurchase() {
 }
 
 // === ITEM INVENTORY LOGIC ===
-function openItemModal(type) {
-    const modal = document.getElementById('itemModal');
-    if (!modal) return;
-    
-    modal.style.display = 'flex';
-    modal.setAttribute('data-action', type);
-    
-    const labelEl = document.getElementById('firstFieldLabel');
-    const firstInput = document.getElementById('serialNumber');
-    const actionBtn = document.getElementById('itemActionBtn');
-    const statusDropdown = document.getElementById('itemStatus');
+let selectedItemData = null;
 
-    firstInput.value = "";
-    document.getElementById('itemName').value = "";
-    document.getElementById('dateChecked').value = "";
-    document.getElementById('remarks').value = "";
+function setupItemRowHighlight() {
+    const tbody = document.getElementById('itemBody');
+    const btnEdit = document.getElementById('btnEditItemAction');
+    const btnDelete = document.getElementById('btnDeleteItemAction');
 
-    if (type === 'add') {
-        labelEl.innerText = "Purchase Number:";
-        actionBtn.innerText = 'Save Changes';
-        unlockItemFields(false);
-        statusDropdown.disabled = false; 
-    } else if (type === 'edit') {
-        labelEl.innerText = "Serial Number:";
-        actionBtn.innerText = 'Update Record';
-        unlockItemFields(false);
-        firstInput.readOnly = true; 
-        statusDropdown.disabled = false; 
-    } else if (type === 'delete') {
-        labelEl.innerText = "Serial Number:";
-        actionBtn.innerText = 'Delete Record';
-        unlockItemFields(true); 
-        statusDropdown.disabled = true; 
-    }
+    if (!tbody) return;
+
+    tbody.addEventListener('click', function(e) {
+        const targetRow = e.target.closest('tr');
+        if (!targetRow) return;
+
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+
+        targetRow.classList.add('table-active');
+        btnEdit.disabled = false;
+        btnDelete.disabled = false;
+
+        const cells = targetRow.querySelectorAll('td');
+        selectedItemData = {
+            serial: cells[0].innerText,
+            name: cells[1].innerText,
+            status: cells[2].innerText,
+            date: cells[3].innerText,
+            remarks: cells[4].innerText
+        };
+    });
+
+    document.addEventListener('click', function(e) {
+        if (tbody.contains(e.target) || 
+            e.target.closest('#btnEditItemAction') || 
+            e.target.closest('#btnDeleteItemAction') ||
+            e.target.closest('.modal')) {
+            return;
+        }
+        const allRows = tbody.querySelectorAll('tr');
+        allRows.forEach(row => row.classList.remove('table-active'));
+        btnEdit.disabled = true;
+        btnDelete.disabled = true;
+        selectedItemData = null;
+    });
 }
 
-function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+function openItemModal(actionType) {
+    document.getElementById('itemActionModal').setAttribute('data-current-action', actionType);
 
-function unlockItemFields(isLocked) {
-    document.getElementById('serialNumber').readOnly = isLocked;
-    document.getElementById('itemName').readOnly = isLocked;
-    document.getElementById('dateChecked').readOnly = isLocked;
-    document.getElementById('remarks').readOnly = isLocked;
+    const title = document.getElementById('itemModalTitle');
+    const serialLabel = document.getElementById('itemSerialLabel');
+    const serialField = document.getElementById('modalItemSerial');
+    const nameField = document.getElementById('modalItemName');
+    const statusField = document.getElementById('modalItemStatus');
+    const dateField = document.getElementById('modalItemDate');
+    const remarksField = document.getElementById('modalItemRemarks');
+    
+    const saveBtn = document.getElementById('btnSaveItem');
+    const cancelBtn = document.getElementById('btnCancelItem');
+
+    [serialField, nameField, statusField, dateField, remarksField].forEach(el => { el.readOnly = false; el.disabled = false; });
+
+    if (actionType === 'add') {
+        title.textContent = "Add Inventory Item";
+        serialLabel.textContent = "Purchase Number:";
+        serialField.placeholder = "Enter PR Number...";
+        serialField.value = ""; nameField.value = ""; statusField.value = "Working"; dateField.value = ""; remarksField.value = "";
+        
+        saveBtn.textContent = "Save";
+        saveBtn.className = "btn btn-success px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+        
+    } else if (actionType === 'edit') {
+        title.textContent = "Edit Inventory Item";
+        serialLabel.textContent = "Serial Number:";
+        serialField.value = selectedItemData.serial;
+        nameField.value = selectedItemData.name;
+        statusField.value = selectedItemData.status;
+        dateField.value = selectedItemData.date;
+        remarksField.value = selectedItemData.remarks;
+        serialField.readOnly = true; 
+
+        saveBtn.textContent = "Save Changes";
+        saveBtn.className = "btn btn-success px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-danger px-4";
+
+    } else if (actionType === 'delete') {
+        title.textContent = "Delete Inventory Item";
+        serialLabel.textContent = "Serial Number:"; 
+        serialField.value = selectedItemData.serial;
+        nameField.value = selectedItemData.name;
+        statusField.value = selectedItemData.status;
+        dateField.value = selectedItemData.date;
+        remarksField.value = selectedItemData.remarks;
+
+        [serialField, nameField, statusField, dateField, remarksField].forEach(el => {
+            el.readOnly = true;
+            if (el.tagName === 'SELECT') el.disabled = true;
+        });
+
+        saveBtn.textContent = "Delete";
+        saveBtn.className = "btn btn-danger px-4";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "btn btn-secondary px-4";
+    }
+
+    const modalElement = document.getElementById('itemActionModal');
+    const myModal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    myModal.show();
+}
+
+function closeItemModal() {
+    const modalElement = document.getElementById('itemActionModal');
+    const myModal = bootstrap.Modal.getInstance(modalElement);
+    if (myModal) myModal.hide();
 }
 
 function saveItemRecord() {
-    const serial = document.getElementById('serialNumber').value;
-    const name = document.getElementById('itemName').value;
-    const status = document.getElementById('itemStatus').value;
-    const date = document.getElementById('dateChecked').value;
-    const rem = document.getElementById('remarks').value;
+    const inputId = document.getElementById('modalItemSerial').value;
+    const name = document.getElementById('modalItemName').value;
+    const status = document.getElementById('modalItemStatus').value;
+    const date = document.getElementById('modalItemDate').value;
+    const remarks = document.getElementById('modalItemRemarks').value;
+
+    const actionType = document.getElementById('itemActionModal').getAttribute('data-current-action');
+    const table = $('#itemTable').DataTable();
+
+    if (actionType === 'delete') {
+        const activeRow = document.querySelector('#itemBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).remove().draw(false);
+            showNotification('Item Record Deleted!', 'delete');
+        }
+        document.getElementById('btnEditItemAction').disabled = true;
+        document.getElementById('btnDeleteItemAction').disabled = true;
+        selectedItemData = null;
+        closeItemModal();
+        return; 
+    }
+
+    if (!inputId || !name || !date) {
+        showNotification("Please fill out all required fields.", 'error');
+        return;
+    }
+
+    let badgeClass = 'status-condemned';
+    if(status === 'Working') badgeClass = 'status-working';
+    else if(status === 'Under Repair') badgeClass = 'status-repair';
+    else if(status === 'Missing') badgeClass = 'status-missing';
+    else if(status === 'Returned') badgeClass = 'status-returned';
     
-    if (!serial || !name || !date) { alert("Please fill required fields!"); return; }
+    const statusHtml = `<span class="status-badge ${badgeClass}">${status}</span>`;
+
+    if (actionType === 'add') {
+        const generatedSerial = `${inputId}-001`; 
+        table.row.add([generatedSerial, name, statusHtml, date, remarks]).draw(false);
+        showNotification('Item Record Added!', 'success');
+        
+    } else if (actionType === 'edit') {
+        const activeRow = document.querySelector('#itemBody tr.table-active');
+        if (activeRow) {
+            table.row(activeRow).data([inputId, name, statusHtml, date, remarks]).draw(false);
+            showNotification('Item Record Updated!', 'success');
+        }
+    }
     
-    const tbody = document.getElementById('itemBody');
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${serial}</td><td>${name}</td><td>${status}</td><td>${date}</td><td>${rem}</td>`;
-    tbody.appendChild(row);
-    alert("Item Record Saved!");
     closeItemModal();
 }
 
@@ -484,9 +593,22 @@ $(document).ready(function() {
         "order": [[1, "desc"]],
         "autoWidth": false,
         "columnDefs": [
-            { "width": "20%", "targets": 0 },
-            { "width": "20%", "targets": 1 },
-            { "width": "60%", "targets": 2 },
+            { "width": "20%", "targets": 0, "className": "text-start"},
+            { "width": "20%", "targets": 1, "className": "text-center"},
+            { "width": "60%", "targets": 2, "className": "text-start" },
+        ]
+    });
+
+    $('#itemTable').DataTable({
+        "scrollX": true,
+        "order": [[3, "desc"]],
+        "autoWidth": false,
+        "columnDefs": [
+            { "width": "12%", "targets": 0, "className": "text-start" },
+            { "width": "25%", "targets": 1, "className": "text-start" },
+            { "width": "12%", "targets": 2, "className": "text-center" },
+            { "width": "12%", "targets": 3, "className": "text-center" },
+            { "width": "39%", "targets": 4, "className": "text-start" }
         ]
     });
 });
@@ -521,20 +643,20 @@ function showNotification(message, type = 'success') {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const modalElement = document.getElementById('createUpdateModal');
-    if (modalElement) {
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modalElement => {
         modalElement.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
-                
                 if (event.target.tagName === 'TEXTAREA') return;
-
                 if (event.target.tagName === 'BUTTON') return;
 
                 event.preventDefault();
-                document.getElementById('btnSaveModal').click();
+                const actionBtn = modalElement.querySelector('.btn-success, .btn-danger:not(.btn-close):not(#btnCancelModal):not(#btnCancelItem)');
+                if (actionBtn) actionBtn.click();
             }
         });
-    }
+    });
 });
 
 // === GLOBAL KEYBOARD SHORTCUTS ===
@@ -542,40 +664,53 @@ document.addEventListener('keydown', function(event) {
     const activeTag = document.activeElement.tagName.toLowerCase();
     const isTyping = activeTag === 'input' || activeTag === 'textarea';
     const isModalOpen = document.body.classList.contains('modal-open');
+    
+    const sidebar = document.getElementById('sidebar');
+    const isSidebarOpen = sidebar && sidebar.classList.contains('active');
 
     if (event.key === 'Escape') {
         if (isModalOpen) {
             if (isTyping) {
                 event.stopPropagation();
             }
-
             return; 
         }
+
+        const activeRows = document.querySelectorAll('tbody tr.table-active');
+        activeRows.forEach(row => row.classList.remove('table-active'));
+        
+        document.querySelectorAll('.btn-edit-modern, .btn-delete-modern').forEach(btn => btn.disabled = true);
+        
+        if (typeof selectedPRData !== 'undefined') selectedPRData = null;
+        if (typeof selectedItemData !== 'undefined') selectedItemData = null;
 
         toggleSidebar();
         return;
     }
 
     if (isTyping) return;
+    
+    if (isSidebarOpen) return; 
 
     if (event.key === '+') {
         event.preventDefault();
-        openModal('add');
+        if (document.getElementById('purchaseTable')) openModal('add');
+        if (document.getElementById('itemTable')) openItemModal('add');
         return;
     }
 
     if (event.key === 'Enter') {
-        if (selectedPRData && !isModalOpen) {
-            event.preventDefault();
-            openModal('edit');
+        if (!isModalOpen) {
+            if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('edit'); }
+            if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('edit'); }
         }
         return;
     }
 
     if (event.key === 'Backspace' || event.key === 'Delete') {
-        if (selectedPRData && !isModalOpen) {
-            event.preventDefault();
-            openModal('delete');
+        if (!isModalOpen) {
+            if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('delete'); }
+            if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('delete'); }
         }
         return;
     }
