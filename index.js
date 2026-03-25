@@ -1,6 +1,7 @@
 /* ============================================================== */
 /* 1. GLOBAL STATE MEMORY                                         */
 /* ============================================================== */
+const API_BASE_URL = "https://localhost:7040/api"
 let selectedPRData = null;
 let selectedItemData = null;
 let selectedMonData = null;
@@ -69,9 +70,15 @@ function applyTheme() {
 function updateThemeUI(isDark) {
     const themeText = document.getElementById('themeText');
     const themeIcon = document.getElementById('themeIcon');
-    if (themeText && themeIcon) {
-        if (isDark) { themeText.innerText = 'Light Mode'; themeIcon.classList.replace('fa-moon', 'fa-sun'); } 
-        else { themeText.innerText = 'Dark Mode'; themeIcon.classList.replace('fa-sun', 'fa-moon'); }
+    
+    if (themeIcon) {
+        if (isDark) { themeIcon.classList.replace('fa-moon', 'fa-sun'); } 
+        else { themeIcon.classList.replace('fa-sun', 'fa-moon'); }
+    }
+    
+    if (themeText) {
+        if (isDark) { themeText.innerText = 'Light Mode'; } 
+        else { themeText.innerText = 'Dark Mode'; }
     }
 }
 
@@ -98,30 +105,77 @@ function showNotification(message, type = 'success') {
 /* ============================================================== */
 /* 3. AUTHENTICATION & INITIALIZATION                             */
 /* ============================================================== */
-function login() {
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+async function login() {
     const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
-    if (!user || !pass) { alert('Please enter both username and password.'); return; }
-    
-    if (user === "admin" && pass === "admin123") {
-        const adminAccount = { name: "Administrator", username: "admin", position: "Head Officer" };
-        localStorage.setItem('activeUser', JSON.stringify(adminAccount));
-        window.location.href = "inside.html";
+    const loginBtn = document.querySelector('.btn-login');
+
+    if (!user || !pass) {
+        alert('Please enter both username and password.');
         return;
     }
-    alert("Invalid credentials. Please use admin / admin123");
+
+    const originalText = loginBtn.innerText;
+    loginBtn.innerText = "Authenticating...";
+    loginBtn.disabled = true;
+
+    try {
+        const response = await fetch(`  ${API_BASE_URL}/Auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Username: user, Password: pass })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            localStorage.setItem('jwtToken', data.token);
+
+            const decoded = parseJwt(data.token);
+
+            const userRole = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Staff';
+            const userName = decoded['http://schemas.xmlsoap.org/ws/2005/06/identity/claims/name'] || user;
+
+            const activeUser = { name: userName, username: user, position: userRole };
+            localStorage.setItem('activeUser', JSON.stringify(activeUser));
+
+            window.location.href = "inside.html";
+        } else {
+            alert(data.message || "Invalid credentials. Please try again.");
+            loginBtn.innerText = originalText;
+            loginBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error("API Error:", error);
+        alert("Could not connect to the server. Is your API running in Visual Studio?");
+        loginBtn.innerText = originalText;
+        loginBtn.disabled = false;
+    }
 }
 
-function logout() { 
-    localStorage.removeItem('activeUser'); 
-    window.location.href = "log.html"; 
+function logout() {
+    localStorage.removeItem('activeUser');
+    localStorage.removeItem('jwtToken');
+    window.location.href = "log.html";
 }
 
-function loadUser() { 
+function loadUser() {
     applyTheme();
     setupActiveSidebar();
 
-    // Apply the DRY Row Selection logic to any tables present on the current page
     bindRowSelection('purchaseBody', 'btnEditAction', 'btnDeleteAction', cells => {
         selectedPRData = cells ? { prNumber: cells[0].innerText, date: cells[1].innerText, description: cells[2].innerText } : null;
     });
@@ -134,16 +188,23 @@ function loadUser() {
         selectedMonData = cells ? { id: cells[0].innerText, serial: cells[1].innerText, name: cells[2].innerText, personnel: cells[3].innerText, division: cells[4].innerText, section: cells[5].innerText, date: cells[6].innerText } : null;
     });
 
-    // Load user details
     const activeUserStr = localStorage.getItem('activeUser');
-    if (!activeUserStr) { window.location.href = "log.html"; return; }
-    
+    const token = localStorage.getItem('jwtToken');
+
+    if (!activeUserStr || !token) {
+        window.location.href = "log.html";
+        return
+    }
+
     const activeUser = JSON.parse(activeUserStr);
-    if (document.getElementById('displayFullName')) document.getElementById('displayFullName').innerText = activeUser.name;
-    if (document.getElementById('displayPosition')) document.getElementById('displayPosition').innerText = activeUser.position;
-    if (document.getElementById('displayHeaderName')) document.getElementById('displayHeaderName').innerText = activeUser.name;
-    if (document.getElementById('dropName')) document.getElementById('dropName').innerText = activeUser.name;
-    if (document.getElementById('dropRole')) document.getElementById('dropRole').innerText = activeUser.position;
+
+    const ids = ['displayFullName', 'displayPosition', 'displayHeaderName', 'dropName', 'dropRole'];
+    const values = [activeUser.name, activeUser.position, activeUser.name, activeUser.name, activeUser.position];
+
+    ids.forEach((id, index) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = values[index];
+    });
 }
 
 /* ============================================================== */
@@ -541,3 +602,14 @@ document.addEventListener('keydown', function(event) {
         return;
     }
 }, true);
+
+// Handle "Enter" key on the Login Page
+const loginPassField = document.getElementById('loginPass');
+if (loginPassField) {
+    loginPassField.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            login();
+        }
+    });
+}
