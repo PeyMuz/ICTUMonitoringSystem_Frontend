@@ -7,6 +7,32 @@ let selectedItemData = null;
 let selectedMonData = null;
 
 /* ============================================================== */
+/* API COMMUNICATION UTILITY                                      */
+/* ============================================================== */
+async function apiFetch(endpoint, method = 'GET', body = null) {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        window.location.href = "log.html";
+        throw new Error("No authorization token found.");
+    }
+
+    const headers = { 'Authorization': `Bearer ${token}` };
+    if (body) headers['Content-Type'] = 'application/json';
+
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.message || `Server Error: ${response.status}`);
+    }
+
+    return response.json();
+}
+
+/* ============================================================== */
 /* 2. CORE UI & SYSTEM (Sidebar, Dropdown, Theme, Fullscreen)     */
 /* ============================================================== */
 function toggleSidebar() {
@@ -257,6 +283,7 @@ $(document).ready(function() {
                 { "width": "60%", "targets": 2, "className": "text-start" }
             ]
         });
+        loadPurchaseRequests();
     }
 
     if ($('#itemTable').length) {
@@ -270,6 +297,7 @@ $(document).ready(function() {
                 { "width": "39%", "targets": 4, "className": "text-start" }
             ]
         });
+        loadInventoryItems();
     }
 
     if ($('#monitorTable').length) {
@@ -285,12 +313,32 @@ $(document).ready(function() {
                 { "width": "14%", "targets": 6, "className": "text-center" }
             ]
         });
+        loadStatusRecords();
     }
 });
 
 /* ============================================================== */
 /* 6. MODULE: PURCHASE REQUESTS                                   */
 /* ============================================================== */
+async function loadPurchaseRequests() {
+    try {
+        const prs = await apiFetch('/PurchaseRequests');
+        const table = $('#purchaseTable').DataTable();
+
+        table.clear();
+
+        prs.forEach(pr => {
+            const formattedDate = pr.prDate.split('T')[0];
+            table.row.add([pr.prNum, formattedDate, pr.prDescription]);
+        });
+
+        table.draw(false);
+    } catch (error) {
+        console.error("Failed to load PRs:", error);
+        showNotification("Failed to connect to database.", "error");
+    }
+}
+
 function openModal(actionType) {
     document.getElementById('createUpdateModal').setAttribute('data-current-action', actionType);
     const title = document.getElementById('modalTitle');
@@ -332,35 +380,103 @@ function closeModal() {
     if (myModal) myModal.hide();
 } 
 
-function savePurchase() {
+async function savePurchase() {
     const pr = document.getElementById('modalPrField').value;
     const dateVal = document.getElementById('modalDateField').value;
     const desc = document.getElementById('modalDescField').value;
     const actionType = document.getElementById('createUpdateModal').getAttribute('data-current-action');
     const table = $('#purchaseTable').DataTable();
+    const btnSave = document.getElementById('btnSaveModal');
+    
+    const originalText = btnSave.textContent;
 
     if (actionType === 'delete') {
-        const activeRow = document.querySelector('#purchaseBody tr.table-active');
-        if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Purchase Request Deleted!', 'delete'); }
-        document.getElementById('btnEditAction').disabled = true; document.getElementById('btnDeleteAction').disabled = true;
-        selectedPRData = null; closeModal(); return; 
+        btnSave.textContent = "Deleting..."; btnSave.disabled = true;
+        try {
+            await apiFetch(`/PurchaseRequests/${pr}`, 'DELETE');
+            const activeRow = document.querySelector('#purchaseBody tr.table-active');
+            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Purchase Request Deleted!', 'delete'); }
+            
+            document.getElementById('btnEditAction').disabled = true; 
+            document.getElementById('btnDeleteAction').disabled = true;
+            selectedPRData = null; 
+            closeModal(); 
+        } catch (error) {
+            showNotification(error.message, 'error');
+        } finally {
+            btnSave.textContent = originalText; btnSave.disabled = false;
+        }
+        return; 
     }
 
     if ((actionType === 'edit' && !pr) || !dateVal || !desc) { showNotification("Please fill out all required fields.", 'error'); return; }
 
-    if (actionType === 'add') {
-        table.row.add(["TBD", dateVal, desc]).draw(false);
-        showNotification('Purchase Request Added!', 'success');
-    } else if (actionType === 'edit') {
-        const activeRow = document.querySelector('#purchaseBody tr.table-active');
-        if (activeRow) { table.row(activeRow).data([pr, dateVal, desc]).draw(false); showNotification('Purchase Request Updated!', 'success'); }
+    btnSave.textContent = "Saving..."; btnSave.disabled = true;
+    
+    try {
+        if (actionType === 'add') {
+            const response = await apiFetch('/PurchaseRequests', 'POST', {
+                prDate: dateVal,
+                prDescription: desc
+            });
+
+            table.row.add([response.newPRNum, dateVal, desc]).draw(false);
+            showNotification('Purchase Request Added!', 'success');
+            
+        } else if (actionType === 'edit') {
+            await apiFetch(`/PurchaseRequests/${pr}`, 'PUT', {
+                prNum: parseInt(pr),
+                prDate: dateVal,
+                prDescription: desc
+            });
+            const activeRow = document.querySelector('#purchaseBody tr.table-active');
+            if (activeRow) { 
+                table.row(activeRow).data([pr, dateVal, desc]).draw(false); 
+                
+                selectedPRData = { prNumber: pr, date: dateVal, description: desc };
+
+                showNotification('Purchase Request Updated!', 'success'); 
+            }
+        }
+        closeModal();
+    } catch (error) {
+        showNotification(error.message, 'error');
+    } finally {
+        btnSave.textContent = originalText; btnSave.disabled = false;
     }
-    closeModal();
 }
 
 /* ============================================================== */
 /* 7. MODULE: INVENTORY ITEMS                                     */
 /* ============================================================== */
+async function loadInventoryItems() {
+    try {
+        const items = await apiFetch('/Inventory');
+        const table = $('#itemTable').DataTable();
+        
+        table.clear();
+        
+        items.forEach(item => {
+            const formattedDate = item.dateChecked.split('T')[0];
+            
+            // Re-apply the color badges based on the live database status
+            let badgeClass = 'status-condemned';
+            if(item.itemStatus === 'Working') badgeClass = 'status-working';
+            else if(item.itemStatus === 'Under Repair') badgeClass = 'status-repair';
+            else if(item.itemStatus === 'Missing') badgeClass = 'status-missing';
+            else if(item.itemStatus === 'Returned') badgeClass = 'status-returned';
+            const statusHtml = `<span class="status-badge ${badgeClass}">${item.itemStatus}</span>`;
+
+            table.row.add([item.itemSerial, item.itemName, statusHtml, formattedDate, item.remarks]);
+        });
+        
+        table.draw(false);
+    } catch (error) {
+        console.error("Failed to load Items:", error);
+        showNotification("Failed to connect to database.", "error");
+    }
+}
+
 function openItemModal(actionType) {
     document.getElementById('itemActionModal').setAttribute('data-current-action', actionType);
     const title = document.getElementById('itemModalTitle');
@@ -402,39 +518,83 @@ function closeItemModal() {
     if (myModal) myModal.hide();
 }
 
-function saveItemRecord() {
-    const inputId = document.getElementById('modalItemSerial').value;
-    const name = document.getElementById('modalItemName').value;
-    const status = document.getElementById('modalItemStatus').value;
-    const date = document.getElementById('modalItemDate').value;
-    const remarks = document.getElementById('modalItemRemarks').value;
-    const actionType = document.getElementById('itemActionModal').getAttribute('data-current-action');
-    const table = $('#itemTable').DataTable();
+async function saveItemRecord() {
+    const btnSave = document.getElementById('btnSaveItem');
+    const originalText = btnSave.textContent;
+    btnSave.textContent = "Saving..."; 
+    btnSave.disabled = true;
 
-    if (actionType === 'delete') {
-        const activeRow = document.querySelector('#itemBody tr.table-active');
-        if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Item Record Deleted!', 'delete'); }
-        document.getElementById('btnEditItemAction').disabled = true; document.getElementById('btnDeleteItemAction').disabled = true;
-        selectedItemData = null; closeItemModal(); return; 
+    try {
+        const inputId = document.getElementById('modalItemSerial').value.trim(); 
+        const name = document.getElementById('modalItemName').value.trim();
+        const status = document.getElementById('modalItemStatus').value;
+        const date = document.getElementById('modalItemDate').value;
+        const remarks = document.getElementById('modalItemRemarks').value.trim();
+        
+        const actionType = document.getElementById('itemActionModal').getAttribute('data-current-action');
+        const table = $('#itemTable').DataTable();
+
+        if (actionType === 'delete') {
+            await apiFetch(`/Inventory/${inputId}`, 'DELETE');
+            const activeRow = document.querySelector('#itemBody tr.table-active');
+            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Item Record Deleted!', 'delete'); }
+            
+            document.getElementById('btnEditItemAction').disabled = true; 
+            document.getElementById('btnDeleteItemAction').disabled = true;
+            selectedItemData = null; 
+            closeItemModal(); 
+            return;
+        }
+
+        if (!inputId || !name || !date) { 
+            showNotification("Please fill out all required fields.", 'error'); 
+            return; 
+        }
+
+        let badgeClass = 'status-condemned';
+        if(status === 'Working') badgeClass = 'status-working';
+        else if(status === 'Under Repair') badgeClass = 'status-repair';
+        else if(status === 'Missing') badgeClass = 'status-missing';
+        else if(status === 'Returned') badgeClass = 'status-returned';
+        const statusHtml = `<span class="status-badge ${badgeClass}">${status}</span>`;
+
+        if (actionType === 'add') {
+            const response = await apiFetch(`/Inventory/${inputId}`, 'POST', {
+                itemName: name,
+                itemStatus: status,
+                dateChecked: date,
+                remarks: remarks
+            });
+            table.row.add([response.newItemSerial, name, statusHtml, date, remarks]).draw(false);
+            showNotification('Item Record Added!', 'success');
+            
+        } else if (actionType === 'edit') {
+            await apiFetch(`/Inventory/${inputId}`, 'PUT', {
+                itemSerial: inputId,
+                itemName: name,
+                itemStatus: status,
+                dateChecked: date,
+                remarks: remarks
+            });
+            
+            const activeRow = document.querySelector('#itemBody tr.table-active');
+            if (activeRow) { 
+                table.row(activeRow).data([inputId, name, statusHtml, date, remarks]).draw(false); 
+                selectedItemData = { serial: inputId, name: name, status: status, date: date, remarks: remarks };
+                showNotification('Item Record Updated!', 'success'); 
+            }
+        }
+        
+        closeItemModal();
+
+    } catch (error) {
+        console.error("API/JS Error: ", error);
+        showNotification(error.message || "An unexpected error occurred.", 'error');
+    } finally {
+
+        btnSave.textContent = originalText; 
+        btnSave.disabled = false;
     }
-
-    if (!inputId || !name || !date) { showNotification("Please fill out all required fields.", 'error'); return; }
-
-    let badgeClass = 'status-condemned';
-    if(status === 'Working') badgeClass = 'status-working';
-    else if(status === 'Under Repair') badgeClass = 'status-repair';
-    else if(status === 'Missing') badgeClass = 'status-missing';
-    else if(status === 'Returned') badgeClass = 'status-returned';
-    const statusHtml = `<span class="status-badge ${badgeClass}">${status}</span>`;
-
-    if (actionType === 'add') {
-        table.row.add([`${inputId}-001`, name, statusHtml, date, remarks]).draw(false);
-        showNotification('Item Record Added!', 'success');
-    } else if (actionType === 'edit') {
-        const activeRow = document.querySelector('#itemBody tr.table-active');
-        if (activeRow) { table.row(activeRow).data([inputId, name, statusHtml, date, remarks]).draw(false); showNotification('Item Record Updated!', 'success'); }
-    }
-    closeItemModal();
 }
 
 /* ============================================================== */
@@ -487,18 +647,25 @@ function closeMonModal() {
     if (myModal) myModal.hide();
 }
 
-// Simulated DB Fetch
+// --- LIVE DATABASE FETCH ---
 const serialInput = document.getElementById('modalMonSerial');
 if (serialInput) {
-    serialInput.addEventListener('input', function(e) {
+    serialInput.addEventListener('input', async function(e) {
         const serialVal = e.target.value.trim();
         const nameContainer = document.getElementById('monNameContainer');
         const nameField = document.getElementById('modalMonName');
         const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
+
         if (actionType === 'add') {
             if (serialVal.length >= 4) { 
-                nameContainer.style.display = 'block';
-                nameField.value = `Dell Optiplex 7000 (Matched: ${serialVal})`;
+                try {
+                    const itemData = await apiFetch(`/Inventory/${serialVal}`);
+                    nameContainer.style.display = 'block';
+                    nameField.value = itemData.itemName;
+                } catch (error) {
+                    nameContainer.style.display = 'none';
+                    nameField.value = "";
+                }
             } else {
                 nameContainer.style.display = 'none';
                 nameField.value = "";
@@ -507,42 +674,100 @@ if (serialInput) {
     });
 }
 
-function saveMonRecord() {
-    const id = document.getElementById('modalMonId').value;
-    const serial = document.getElementById('modalMonSerial').value.trim();
-    const name = document.getElementById('modalMonName').value.trim();
-    const personnel = document.getElementById('modalMonPersonnel').value.trim();
-    const division = document.getElementById('modalMonDivision').value;
-    const section = document.getElementById('modalMonSection').value;
-    const date = document.getElementById('modalMonDate').value;
-    const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
-    const table = $('#monitorTable').DataTable();
-
-    if (actionType === 'delete') {
-        const activeRow = document.querySelector('#monitorBody tr.table-active');
-        if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Status Record Deleted!', 'delete'); }
-        document.getElementById('btnEditMonAction').disabled = true; document.getElementById('btnDeleteMonAction').disabled = true;
-        selectedMonData = null; closeMonModal(); return; 
+async function loadStatusRecords() {
+    try {
+        const records = await apiFetch('/ItemStatus');
+        const table = $('#monitorTable').DataTable();
+        
+        table.clear();
+        
+        records.forEach(r => {
+            const formattedDate = r.dateAwarded.split('T')[0];
+            table.row.add([r.assignedID, r.itemSerial, r.itemName, r.personnelName, r.division, r.section, formattedDate]);
+        });
+        
+        table.draw(false);
+    } catch (error) {
+        console.error("Failed to load Statuses:", error);
+        showNotification("Failed to connect to database.", "error");
     }
+}
 
-    if (!serial || !personnel || !date) { showNotification("Please fill out all required fields.", 'error'); return; }
-    if (actionType === 'add' && !name) { showNotification("Please enter a valid Serial Number to fetch an Item.", 'error'); return; }
+async function saveMonRecord() {
+    const btnSave = document.getElementById('btnSaveMon');
+    const originalText = btnSave.textContent;
+    btnSave.textContent = "Saving..."; 
+    btnSave.disabled = true;
 
-    if (actionType === 'add') {
-        table.row.add(["TBD", serial, name, personnel, division, section, date]).draw(false);
-        showNotification('Status Record Added!', 'success');
-    } else if (actionType === 'edit') {
-        const activeRow = document.querySelector('#monitorBody tr.table-active');
-        if (activeRow) { table.row(activeRow).data([id, serial, selectedMonData.name, personnel, division, section, date]).draw(false); showNotification('Status Record Updated!', 'success'); }
+    try {
+        const id = document.getElementById('modalMonId').value;
+        const serial = document.getElementById('modalMonSerial').value.trim();
+        const name = document.getElementById('modalMonName').value.trim();
+        const personnel = document.getElementById('modalMonPersonnel').value.trim();
+        const division = document.getElementById('modalMonDivision').value;
+        const section = document.getElementById('modalMonSection').value;
+        const date = document.getElementById('modalMonDate').value;
+        
+        const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
+        const table = $('#monitorTable').DataTable();
+
+        if (actionType === 'delete') {
+            await apiFetch(`/ItemStatus/${id}`, 'DELETE');
+            const activeRow = document.querySelector('#monitorBody tr.table-active');
+            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Status Record Deleted!', 'delete'); }
+            
+            document.getElementById('btnEditMonAction').disabled = true; 
+            document.getElementById('btnDeleteMonAction').disabled = true;
+            selectedMonData = null; 
+            closeMonModal(); 
+            return; 
+        }
+
+        if (!serial || !personnel || !date) { showNotification("Please fill out all required fields.", 'error'); return; }
+        if (actionType === 'add' && !name) { showNotification("Please enter a valid Serial Number to fetch an Item.", 'error'); return; }
+
+        if (actionType === 'add') {
+            const response = await apiFetch(`/ItemStatus/${serial}`, 'POST', {
+                personnelName: personnel,
+                division: division,
+                section: section,
+                dateAwarded: date
+            });
+            table.row.add([response.newAssignedId, serial, name, personnel, division, section, date]).draw(false);
+            showNotification('Status Record Added!', 'success');
+            
+        } else if (actionType === 'edit') {
+            await apiFetch(`/ItemStatus/${id}`, 'PUT', {
+                assignedID: id,
+                personnelName: personnel,
+                division: division,
+                section: section,
+                dateAwarded: date
+            });
+            
+            const activeRow = document.querySelector('#monitorBody tr.table-active');
+            if (activeRow) { 
+                table.row(activeRow).data([id, serial, selectedMonData.name, personnel, division, section, date]).draw(false); 
+                selectedMonData = { id: id, serial: serial, name: selectedMonData.name, personnel: personnel, division: division, section: section, date: date };
+                showNotification('Status Record Updated!', 'success'); 
+            }
+        }
+        
+        closeMonModal();
+
+    } catch (error) {
+        console.error("API/JS Error: ", error);
+        showNotification(error.message || "An unexpected error occurred.", 'error');
+    } finally {
+        btnSave.textContent = originalText; 
+        btnSave.disabled = false;
     }
-    closeMonModal();
 }
 
 /* ============================================================== */
 /* 9. GLOBAL KEYBOARD SHORTCUTS & EVENT LISTENERS                 */
 /* ============================================================== */
 
-// Handle "Enter" inside any Bootstrap Modal to submit it
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.modal').forEach(modalElement => {
         modalElement.addEventListener('keydown', function(event) {
