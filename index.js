@@ -38,7 +38,18 @@ async function apiFetch(endpoint, method = 'GET', body = null) {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    if (sidebar) sidebar.classList.toggle('active');
+
+    const mainContent = document.querySelector('main');
+    const headerContent = document.querySelector('header');
+
+    if (sidebar) {
+        const isOpening = !sidebar.classList.contains('active');
+        sidebar.classList.toggle('active');
+        
+        if (mainContent) mainContent.inert = isOpening;
+        if (headerContent) headerContent.inert = isOpening;
+    }
+
     if (overlay) {
         if (overlay.classList.contains('active')) {
             overlay.classList.remove('active');
@@ -319,6 +330,10 @@ $(document).ready(function() {
         });
         loadStatusRecords();
     }
+
+    $(document).on('draw.dt', function() {
+        $('.page-link, .paginate_button').removeAttr('href').css('cursor', 'pointer');
+    });
 });
 
 /* ============================================================== */
@@ -539,6 +554,9 @@ function openItemModal(actionType) {
     const saveBtn = document.getElementById('btnSaveItem');
     const cancelBtn = document.getElementById('btnCancelItem');
 
+    const validationText = document.getElementById('prValidationText');
+    if (validationText) validationText.textContent = "";
+
     [serialField, nameField, statusField, dateField, remarksField].forEach(el => { el.readOnly = false; el.disabled = false; });
 
     if (actionType === 'add') {
@@ -645,6 +663,32 @@ async function saveItemRecord() {
         btnSave.textContent = originalText; 
         btnSave.disabled = false;
     }
+}
+
+const itemSerialInput = document.getElementById('modalItemSerial');
+if (itemSerialInput) {
+    itemSerialInput.addEventListener('input', async function(e) {
+        const prVal = e.target.value.trim();
+        const validationText = document.getElementById('prValidationText');
+        const actionType = document.getElementById('itemActionModal').getAttribute('data-current-action');
+
+        if (actionType === 'add' && validationText) {
+            if (prVal.length > 0) { 
+                try {
+                    await apiFetch(`/PurchaseRequests/${prVal}`);
+                    
+                    validationText.textContent = "✓ Valid Purchase Number found.";
+                    validationText.className = "text-success fw-bold mt-1";
+                } catch (error) {
+
+                    validationText.textContent = "✗ Purchase Number not found.";
+                    validationText.className = "text-danger fw-bold mt-1";
+                }
+            } else {
+                validationText.textContent = "";
+            }
+        }
+    });
 }
 
 /* ============================================================== */
