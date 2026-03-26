@@ -234,7 +234,7 @@ function loadUser() {
 }
 
 /* ============================================================== */
-/* 4. UNIVERSAL TABLE LOGIC (The DRY Principle applied)           */
+/* 4. UNIVERSAL TABLE LOGIC                                       */
 /* ============================================================== */
 function bindRowSelection(tbodyId, editBtnId, deleteBtnId, extractDataCallback) {
     const tbody = document.getElementById(tbodyId);
@@ -242,7 +242,6 @@ function bindRowSelection(tbodyId, editBtnId, deleteBtnId, extractDataCallback) 
     const btnDelete = document.getElementById(deleteBtnId);
     if (!tbody) return;
 
-    // Handle Row Click
     tbody.addEventListener('click', function(e) {
         const targetRow = e.target.closest('tr');
         if (!targetRow) return;
@@ -256,7 +255,6 @@ function bindRowSelection(tbodyId, editBtnId, deleteBtnId, extractDataCallback) 
         extractDataCallback(targetRow.querySelectorAll('td'));
     });
 
-    // Handle Click Outside
     document.addEventListener('click', function(e) {
         if (tbody.contains(e.target) || 
            (btnEdit && btnEdit.contains(e.target)) || 
@@ -270,6 +268,12 @@ function bindRowSelection(tbodyId, editBtnId, deleteBtnId, extractDataCallback) 
     });
 }
 
+function formatLongText(text) {
+    if (!text) return '';
+    const safeText = text.replace(/"/g, '&quot;');
+    return `<span title="${safeText}" style="cursor: help; border-bottom: 1px dashed #9ca3af;">${text}</span>`;
+}
+
 /* ============================================================== */
 /* 5. DATATABLES INITIALIZATION                                   */
 /* ============================================================== */
@@ -278,7 +282,7 @@ $(document).ready(function() {
         $('#purchaseTable').DataTable({
             "scrollX": true, "order": [[1, "desc"]], "autoWidth": false,
             "columnDefs": [
-                { "width": "20%", "targets": 0, "className": "text-start"},
+                { "width": "20%", "targets": 0, "className": "text-center"},
                 { "width": "20%", "targets": 1, "className": "text-center"},
                 { "width": "60%", "targets": 2, "className": "text-start" }
             ]
@@ -290,7 +294,7 @@ $(document).ready(function() {
         $('#itemTable').DataTable({
             "scrollX": true, "order": [[3, "desc"]], "autoWidth": false,
             "columnDefs": [
-                { "width": "12%", "targets": 0, "className": "text-start" },
+                { "width": "12%", "targets": 0, "className": "text-center" },
                 { "width": "25%", "targets": 1, "className": "text-start" },
                 { "width": "12%", "targets": 2, "className": "text-center" },
                 { "width": "12%", "targets": 3, "className": "text-center" },
@@ -305,7 +309,7 @@ $(document).ready(function() {
             "scrollX": true, "order": [[6, "desc"]], "autoWidth": false,
             "columnDefs": [
                 { "width": "8%", "targets": 0, "className": "text-center" },
-                { "width": "14%", "targets": 1, "className": "text-start" },
+                { "width": "14%", "targets": 1, "className": "text-center" },
                 { "width": "20%", "targets": 2, "className": "text-start" },
                 { "width": "20%", "targets": 3, "className": "text-start" },
                 { "width": "14%", "targets": 4, "className": "text-center" },
@@ -329,7 +333,7 @@ async function loadPurchaseRequests() {
 
         prs.forEach(pr => {
             const formattedDate = pr.prDate.split('T')[0];
-            table.row.add([pr.prNum, formattedDate, pr.prDescription]);
+            table.row.add([pr.prNum, formattedDate, formatLongText(pr.prDescription)]);
         });
 
         table.draw(false);
@@ -354,23 +358,41 @@ function openModal(actionType) {
 
     if (actionType === 'add') {
         title.textContent = "Add Purchase Request";
-        prContainer.style.display = 'none';
-        dateField.value = ""; descField.value = "";
-        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        prContainer.style.display = 'block';
+        
+        prField.readOnly = false;
+        prField.value = ""; 
+        dateField.value = ""; 
+        descField.value = "";
+        
+        document.getElementById('legacyCheckContainer').style.display = 'block';
+        document.getElementById('modalLegacyCheck').checked = false;
+
+        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
+        
     } else if (actionType === 'edit') {
         title.textContent = "Edit Purchase Request";
         prContainer.style.display = 'block';
-        prField.value = selectedPRData.prNumber; dateField.value = selectedPRData.date; descField.value = selectedPRData.description;
-        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        
+        document.getElementById('legacyCheckContainer').style.display = 'none';
+
+        prField.value = selectedPRData.prNumber; 
+        prField.readOnly = true;
+        dateField.value = selectedPRData.date; 
+        descField.value = selectedPRData.description;
+        
+        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
+
     } else if (actionType === 'delete') {
         title.textContent = "Delete Purchase Request";
         prContainer.style.display = 'block';
         prField.value = selectedPRData.prNumber; dateField.value = selectedPRData.date; descField.value = selectedPRData.description;
         dateField.readOnly = true; descField.readOnly = true;
-        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-danger px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-secondary px-4";
+
+        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-modern btn-danger px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('createUpdateModal')).show();
 }
@@ -381,9 +403,11 @@ function closeModal() {
 } 
 
 async function savePurchase() {
-    const pr = document.getElementById('modalPrField').value;
+    const prInput = document.getElementById('modalPrField').value.trim();
     const dateVal = document.getElementById('modalDateField').value;
-    const desc = document.getElementById('modalDescField').value;
+    const desc = document.getElementById('modalDescField').value.trim();
+    const isLegacy = document.getElementById('modalLegacyCheck')?.checked;
+    
     const actionType = document.getElementById('createUpdateModal').getAttribute('data-current-action');
     const table = $('#purchaseTable').DataTable();
     const btnSave = document.getElementById('btnSaveModal');
@@ -411,16 +435,26 @@ async function savePurchase() {
 
     if ((actionType === 'edit' && !pr) || !dateVal || !desc) { showNotification("Please fill out all required fields.", 'error'); return; }
 
+    if (actionType === 'add' && !isLegacy && (!prInput || isNaN(prInput))) {
+        showNotification("Please enter a valid Purchase Number, or check Auto-Generate.", 'error');
+        return;
+    }
+    if (!dateVal || !desc) { 
+        showNotification("Please fill out all required fields.", 'error'); 
+        return; 
+    }
+
     btnSave.textContent = "Saving..."; btnSave.disabled = true;
     
     try {
         if (actionType === 'add') {
             const response = await apiFetch('/PurchaseRequests', 'POST', {
+                prNum: isLegacy ? 0 : parseInt(prInput), 
                 prDate: dateVal,
                 prDescription: desc
             });
-
-            table.row.add([response.newPRNum, dateVal, desc]).draw(false);
+            
+            table.row.add([response.newPRNum, dateVal, formatLongText(desc)]).draw(false);
             showNotification('Purchase Request Added!', 'success');
             
         } else if (actionType === 'edit') {
@@ -431,7 +465,7 @@ async function savePurchase() {
             });
             const activeRow = document.querySelector('#purchaseBody tr.table-active');
             if (activeRow) { 
-                table.row(activeRow).data([pr, dateVal, desc]).draw(false); 
+                table.row(activeRow).data([pr, dateVal, formatLongText(desc)]).draw(false); 
                 
                 selectedPRData = { prNumber: pr, date: dateVal, description: desc };
 
@@ -446,6 +480,23 @@ async function savePurchase() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const legacyCheck = document.getElementById('modalLegacyCheck');
+    const prField = document.getElementById('modalPrField');
+    
+    if (legacyCheck && prField) {
+        legacyCheck.addEventListener('change', function() {
+            if (this.checked) {
+                prField.value = "Auto-Generated";
+                prField.readOnly = true;
+            } else {
+                prField.value = "";
+                prField.readOnly = false;
+            }
+        });
+    }
+});
+
 /* ============================================================== */
 /* 7. MODULE: INVENTORY ITEMS                                     */
 /* ============================================================== */
@@ -459,7 +510,6 @@ async function loadInventoryItems() {
         items.forEach(item => {
             const formattedDate = item.dateChecked.split('T')[0];
             
-            // Re-apply the color badges based on the live database status
             let badgeClass = 'status-condemned';
             if(item.itemStatus === 'Working') badgeClass = 'status-working';
             else if(item.itemStatus === 'Under Repair') badgeClass = 'status-repair';
@@ -467,7 +517,7 @@ async function loadInventoryItems() {
             else if(item.itemStatus === 'Returned') badgeClass = 'status-returned';
             const statusHtml = `<span class="status-badge ${badgeClass}">${item.itemStatus}</span>`;
 
-            table.row.add([item.itemSerial, item.itemName, statusHtml, formattedDate, item.remarks]);
+            table.row.add([item.itemSerial, item.itemName, statusHtml, formattedDate, formatLongText(item.remarks)]);
         });
         
         table.draw(false);
@@ -495,20 +545,20 @@ function openItemModal(actionType) {
         title.textContent = "Add Inventory Item"; serialLabel.textContent = "Purchase Number:";
         serialField.placeholder = "Enter PR Number...";
         serialField.value = ""; nameField.value = ""; statusField.value = "Working"; dateField.value = ""; remarksField.value = "";
-        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'edit') {
         title.textContent = "Edit Inventory Item"; serialLabel.textContent = "Serial Number:";
         serialField.value = selectedItemData.serial; nameField.value = selectedItemData.name; statusField.value = selectedItemData.status; dateField.value = selectedItemData.date; remarksField.value = selectedItemData.remarks;
         serialField.readOnly = true; 
-        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'delete') {
         title.textContent = "Delete Inventory Item"; serialLabel.textContent = "Serial Number:"; 
         serialField.value = selectedItemData.serial; nameField.value = selectedItemData.name; statusField.value = selectedItemData.status; dateField.value = selectedItemData.date; remarksField.value = selectedItemData.remarks;
         [serialField, nameField, statusField, dateField, remarksField].forEach(el => { el.readOnly = true; if (el.tagName === 'SELECT') el.disabled = true; });
-        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-danger px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-secondary px-4";
+        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-modern btn-danger px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('itemActionModal')).show();
 }
@@ -565,7 +615,7 @@ async function saveItemRecord() {
                 dateChecked: date,
                 remarks: remarks
             });
-            table.row.add([response.newItemSerial, name, statusHtml, date, remarks]).draw(false);
+            table.row.add([response.newItemSerial, name, statusHtml, date, formatLongText(remarks)]).draw(false);
             showNotification('Item Record Added!', 'success');
             
         } else if (actionType === 'edit') {
@@ -579,7 +629,7 @@ async function saveItemRecord() {
             
             const activeRow = document.querySelector('#itemBody tr.table-active');
             if (activeRow) { 
-                table.row(activeRow).data([inputId, name, statusHtml, date, remarks]).draw(false); 
+                table.row(activeRow).data([inputId, name, statusHtml, date, formatLongText(remarks)]).draw(false); 
                 selectedItemData = { serial: inputId, name: name, status: status, date: date, remarks: remarks };
                 showNotification('Item Record Updated!', 'success'); 
             }
@@ -621,23 +671,23 @@ function openMonModal(actionType) {
         title.textContent = "Add Status Record";
         idContainer.style.display = 'none'; nameContainer.style.display = 'none';
         serialField.value = ""; personnelField.value = ""; divisionField.value = "NCR"; sectionField.value = "ICT"; dateField.value = "";
-        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'edit') {
         title.textContent = "Edit Status Record";
         idContainer.style.display = 'block'; nameContainer.style.display = 'block'; 
         idField.value = selectedMonData.id; serialField.value = selectedMonData.serial; nameField.value = selectedMonData.name; personnelField.value = selectedMonData.personnel; divisionField.value = selectedMonData.division; sectionField.value = selectedMonData.section; dateField.value = selectedMonData.date;
         serialField.readOnly = true;
-        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-success px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-danger px-4";
+        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'delete') {
         title.textContent = "Delete Status Record";
         idContainer.style.display = 'block'; nameContainer.style.display = 'block';
         idField.value = selectedMonData.id; serialField.value = selectedMonData.serial; nameField.value = selectedMonData.name; personnelField.value = selectedMonData.personnel; divisionField.value = selectedMonData.division; sectionField.value = selectedMonData.section; dateField.value = selectedMonData.date;
         [serialField, personnelField, dateField].forEach(el => el.readOnly = true);
         [divisionField, sectionField].forEach(el => el.disabled = true);
-        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-danger px-4";
-        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-secondary px-4";
+        saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-modern btn-danger px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('monActionModal')).show();
 }

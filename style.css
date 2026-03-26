@@ -756,18 +756,18 @@ body.dashboard-body {
 /* ============================================================== */
 /* TABLE COLUMN WIDTHS                                            */
 /* ============================================================== */
-#purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 20%; text-align: left !important; }
+#purchaseTable th:nth-child(1), #purchaseTable td:nth-child(1) { width: 20%; text-align: center !important; }
 #purchaseTable th:nth-child(2), #purchaseTable td:nth-child(2) { width: 20%; text-align: center !important; }
 #purchaseTable th:nth-child(3), #purchaseTable td:nth-child(3) { width: 60%; text-align: left !important; }
 
-#itemTable th:nth-child(1), #itemTable td:nth-child(1) { width: 12%; text-align: left !important; }
+#itemTable th:nth-child(1), #itemTable td:nth-child(1) { width: 12%; text-align: center !important; }
 #itemTable th:nth-child(2), #itemTable td:nth-child(2) { width: 25%; text-align: left !important; }
 #itemTable th:nth-child(3), #itemTable td:nth-child(3) { width: 12%; text-align: center !important; }
 #itemTable th:nth-child(4), #itemTable td:nth-child(4) { width: 12%; text-align: center !important; }
 #itemTable th:nth-child(5), #itemTable td:nth-child(5) { width: 39%; text-align: left !important; }
 
 #monitorTable th:nth-child(1), #monitorTable td:nth-child(1) { width: 8%; text-align: center !important; }
-#monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 14%; text-align: left !important; }
+#monitorTable th:nth-child(2), #monitorTable td:nth-child(2) { width: 14%; text-align: center !important; }
 #monitorTable th:nth-child(3), #monitorTable td:nth-child(3) { width: 20%; text-align: left !important; }
 #monitorTable th:nth-child(4), #monitorTable td:nth-child(4) { width: 20%; text-align: left !important; }
 #monitorTable th:nth-child(5), #monitorTable td:nth-child(5) { width: 14%; text-align: center !important; }
@@ -820,6 +820,8 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 .dark-mode .profile-dropdown .dropdown-header span { background-color: #334155; color: #e2e8f0; }
 .dark-mode .dropdown-body { color: #e2e8f0; }
 .dark-mode .dropdown-footer { background-color: #0f172a; border-top: 1px solid #334155; }
+
+.dark-mode .text-muted { color: #94a3b8 !important; }
 
 /* DataTables Dark Mode Overrides */
 .dark-mode .modern-table-wrapper table th { background-color: #0f172a !important; color: #38bdf8 !important; border-color: #334155 !important; }
