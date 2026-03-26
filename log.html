@@ -8,6 +8,8 @@
 </head>
 <body onload="applyTheme()" class="login-body">
 
+    <script>if(localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark-mode');</script>
+
     <button class="theme-toggle-login" onclick="toggleTheme()">
         <i class="fa-solid fa-moon" id="themeIcon"></i>
     </button>

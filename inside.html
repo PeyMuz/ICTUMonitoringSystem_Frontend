@@ -10,6 +10,8 @@
 </head>
 <body onload="loadUser()" class="dashboard-body theme-dashboard">
 
+    <script>if(localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark-mode');</script>
+
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <header class="concept-header">
@@ -17,7 +19,7 @@
             <div class="hamburger-modern" onclick="toggleSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </div>
-            <h1 class="header-tab-name">Dashboard Center</h1>
+            <h1 class="header-tab-name">Dashboard</h1>
         </div>
 
         <div class="header-right">
@@ -28,8 +30,12 @@
 
                 <div id="profileDropdown" class="profile-dropdown">
                     <div class="dropdown-header">
-                        <strong id="dropName">Name</strong>
-                        <span id="dropRole">Role</span>
+                        <strong id="dropName">Name Here</strong>
+                        <span id="dropRole">Role Here</span>
+                    </div>
+                    <div class="dropdown-body">
+                        <p><strong>Division:</strong> <span id="dropDiv">NCR</span></p>
+                        <p><strong>Section:</strong> <span id="dropSec">ICTU</span></p>
                     </div>
                     <div class="dropdown-footer">
                         <button class="dropdown-logout" onclick="logout()">

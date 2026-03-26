@@ -17,19 +17,25 @@ body {
 /* ============================================================== */
 body, .dash-header, .sidebar, .modern-card, th, td, 
 input, select, textarea, .btn-modern, .landing-top, .landing-bottom, #log, .nav-item {
-    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, text-shadow 0.4s ease;
+    transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, text-shadow 0.4s ease, opacity 0.3s ease-in-out;
 }
 
 /* ============================================================== */
 /* COMBINED LOGIN PAGE (Split Screen)                             */
 /* ============================================================== */
 body.login-body {
+    opacity: 0;
     margin: 0;
     height: 100vh;
     display: flex;
     background-color: #f1f5f9;
     font-family: Arial, sans-serif;
     overflow: hidden;
+    transition: opacity 0.3s ease-out, background-color 0.4s ease;
+}
+
+body.login-body.page-loaded {
+    opacity: 1; 
 }
 
 .login-wrapper {
@@ -204,10 +210,16 @@ body.login-body {
 /* DASHBOARD LAYOUT & OLD HEADER (To be refactored)               */
 /* ============================================================== */
 body.dashboard-body {
-   background-color: #ffffff;
+   opacity: 0;
+   background-color: #f8fafc;
    height: auto;
    display: block;
    margin: 0;
+   transition: opacity 0.3s ease-out, background-color 0.4s ease, color 0.4s ease;
+}
+
+body.dashboard-body.page-loaded {
+   opacity: 1; 
 }
 
 .dash-header {
@@ -799,7 +811,7 @@ body.dashboard-body {
 /* ============================================================== */
 /* DARK MODE THEME & GLOW EFFECTS                                 */
 /* ============================================================== */
-body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
+html.dark-mode, html.dark-mode body { background-color: #0b1120 !important; color: #e2e8f0; }
 .dark-mode .data-table-main { background-color: #0b1120; }
 .dark-mode .concept-header { background-color: #0f172a; border-bottom: 1px solid #1e293b; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 .dark-mode .header-username { color: #e2e8f0; }
@@ -976,21 +988,21 @@ body.dark-mode { background-color: #0b1120; color: #e2e8f0; }
 /* ============================================================== */
 /* PAGE THEMES (Custom Headers & Titles)                          */
 /* ============================================================== */
-body:not(.dark-mode).theme-inventory .concept-header { background-color: #1b5e20; }
+html:not(.dark-mode) body.theme-inventory .concept-header { background-color: #1b5e20; }
 .theme-inventory .card-title-custom { color: #2e7d32; }
-.dark-mode.theme-inventory .card-title-custom { color: #4ade80; }
+.dark-mode .theme-inventory .card-title-custom { color: #4ade80; }
 
-body:not(.dark-mode).theme-purchase .concept-header { background-color: #114a91; }
+html:not(.dark-mode) body.theme-purchase .concept-header { background-color: #114a91; }
 .theme-purchase .card-title-custom { color: #114a91; }
-.dark-mode.theme-purchase .card-title-custom { color: #38bdf8; }
+.dark-mode .theme-purchase .card-title-custom { color: #38bdf8; }
 
-body:not(.dark-mode).theme-status .concept-header { background-color: #d84315; }
+html:not(.dark-mode) body.theme-status .concept-header { background-color: #d84315; }
 .theme-status .card-title-custom { color: #d84315; }
-.dark-mode.theme-status .card-title-custom { color: #fb923c; }
+.dark-mode .theme-status .card-title-custom { color: #fb923c; }
 
-body:not(.dark-mode).theme-dashboard .concept-header { background-color: #4338ca; }
+html:not(.dark-mode) body.theme-dashboard .concept-header { background-color: #4338ca; }
 .theme-dashboard .card-title-custom { color: #4338ca; }
-.dark-mode.theme-dashboard .card-title-custom { color: #818cf8; }
+.dark-mode .theme-dashboard .card-title-custom { color: #818cf8; }
 
 /* ============================================================== */
 /* STATUS BADGES                                                  */
@@ -1146,3 +1158,36 @@ body:not(.dark-mode).theme-dashboard .concept-header { background-color: #4338ca
 .dark-mode .dashboard-welcome-banner p { font-size: 14px; color: #94a3b8 !important; }
 .dark-mode .modern-card { border-color: rgba(255,255,255,0.05); }
 .dark-mode .modern-card .table thead th { background-color: #0f172a !important; border-bottom-color: #334155 !important; color: #94a3b8 !important;}
+
+/* ============================================================== */
+/* DASHBOARD & MODAL TABLE DARK MODE FIXES                        */
+/* ============================================================== */
+
+.dark-mode .modern-card .table tbody td,
+.dark-mode .modal-body .table tbody td {
+    background-color: transparent !important; 
+    color: #e2e8f0 !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+.dark-mode .modern-card .table tbody tr:hover td,
+.dark-mode .modal-body .table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.05) !important; 
+}
+
+.dark-mode .modal-body .table thead th {
+    background-color: #0f172a !important;
+    color: #94a3b8 !important;
+    border-bottom: 2px solid #334155 !important;
+}
+
+.dark-mode #dashModalTitle {
+    color: #818cf8 !important;
+}
+
+.dark-mode .modern-card a.text-secondary {
+    color: #94a3b8 !important;
+}
+.dark-mode .modern-card a.text-secondary:hover {
+    color: #38bdf8 !important;
+}

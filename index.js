@@ -91,19 +91,18 @@ function setupActiveSidebar() {
 }
 
 function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
+    document.documentElement.classList.toggle('dark-mode');
+    const isDark = document.documentElement.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDark);
     updateThemeUI(isDark);
 }
 
 function applyTheme() {
     const isDark = localStorage.getItem('darkMode') === 'true';
-    if (isDark) document.body.classList.add('dark-mode');
-    else document.body.classList.remove('dark-mode');
+    if (isDark) document.documentElement.classList.add('dark-mode');
+    else document.documentElement.classList.remove('dark-mode');
     updateThemeUI(isDark);
 }
-
 function updateThemeUI(isDark) {
     const themeText = document.getElementById('themeText');
     const themeIcon = document.getElementById('themeIcon');
@@ -160,17 +159,18 @@ async function login() {
     const pass = document.getElementById('loginPass').value;
     const loginBtn = document.querySelector('.btn-login');
 
+    if (loginBtn.disabled) return;
+
     if (!user || !pass) {
         alert('Please enter both username and password.');
         return;
     }
 
-    const originalText = loginBtn.innerText;
     loginBtn.innerText = "Authenticating...";
     loginBtn.disabled = true;
 
     try {
-        const response = await fetch(`  ${API_BASE_URL}/Auth/login`, {
+        const response = await fetch(`${API_BASE_URL}/Auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ Username: user, Password: pass })
@@ -192,13 +192,13 @@ async function login() {
             window.location.href = "inside.html";
         } else {
             alert(data.message || "Invalid credentials. Please try again.");
-            loginBtn.innerText = originalText;
+            loginBtn.innerText = "Log In"; 
             loginBtn.disabled = false;
         }
     } catch (error) {
         console.error("API Error:", error);
         alert("Could not connect to the server. Is your API running in Visual Studio?");
-        loginBtn.innerText = originalText;
+        loginBtn.innerText = "Log In"; 
         loginBtn.disabled = false;
     }
 }
@@ -286,58 +286,65 @@ function formatLongText(text) {
 }
 
 /* ============================================================== */
-/* 5. DATATABLES INITIALIZATION                                   */
+/* 5. DATATABLES INITIALIZATION & PAGE REVEAL                     */
 /* ============================================================== */
-$(document).ready(function() {
+if (typeof $ !== 'undefined') {
+    $(document).ready(async function() {
+        
+        try {
+            if (document.getElementById('dashTotalWorking')) {
+                await loadDashboardData();
+            } 
+            else if ($('#purchaseTable').length) {
+                $('#purchaseTable').DataTable({
+                    "scrollX": true, "order": [[1, "desc"]], "autoWidth": false,
+                    "columnDefs": [
+                        { "width": "20%", "targets": 0, "className": "text-center"},
+                        { "width": "20%", "targets": 1, "className": "text-center"},
+                        { "width": "60%", "targets": 2, "className": "text-start" }
+                    ]
+                });
+                await loadPurchaseRequests();
+            } 
+            else if ($('#itemTable').length) {
+                $('#itemTable').DataTable({
+                    "scrollX": true, "order": [[3, "desc"]], "autoWidth": false,
+                    "columnDefs": [
+                        { "width": "12%", "targets": 0, "className": "text-center" },
+                        { "width": "25%", "targets": 1, "className": "text-start" },
+                        { "width": "12%", "targets": 2, "className": "text-center" },
+                        { "width": "12%", "targets": 3, "className": "text-center" },
+                        { "width": "39%", "targets": 4, "className": "text-start" }
+                    ]
+                });
+                await loadInventoryItems();
+            } 
+            else if ($('#monitorTable').length) {
+                $('#monitorTable').DataTable({
+                    "scrollX": true, "order": [[6, "desc"]], "autoWidth": false,
+                    "columnDefs": [
+                        { "width": "8%", "targets": 0, "className": "text-center" },
+                        { "width": "14%", "targets": 1, "className": "text-center" },
+                        { "width": "20%", "targets": 2, "className": "text-start" },
+                        { "width": "20%", "targets": 3, "className": "text-start" },
+                        { "width": "14%", "targets": 4, "className": "text-center" },
+                        { "width": "10%", "targets": 5, "className": "text-center" },
+                        { "width": "14%", "targets": 6, "className": "text-center" }
+                    ]
+                });
+                await loadStatusRecords();
+            }
+        } catch (error) {
+            console.error("Initialization Error:", error);
+        }
 
-    loadDashboardData();
-
-    if ($('#purchaseTable').length) {
-        $('#purchaseTable').DataTable({
-            "scrollX": true, "order": [[1, "desc"]], "autoWidth": false,
-            "columnDefs": [
-                { "width": "20%", "targets": 0, "className": "text-center"},
-                { "width": "20%", "targets": 1, "className": "text-center"},
-                { "width": "60%", "targets": 2, "className": "text-start" }
-            ]
+        $(document).on('draw.dt', function() {
+            $('.page-link, .paginate_button').removeAttr('href').css('cursor', 'pointer');
         });
-        loadPurchaseRequests();
-    }
 
-    if ($('#itemTable').length) {
-        $('#itemTable').DataTable({
-            "scrollX": true, "order": [[3, "desc"]], "autoWidth": false,
-            "columnDefs": [
-                { "width": "12%", "targets": 0, "className": "text-center" },
-                { "width": "25%", "targets": 1, "className": "text-start" },
-                { "width": "12%", "targets": 2, "className": "text-center" },
-                { "width": "12%", "targets": 3, "className": "text-center" },
-                { "width": "39%", "targets": 4, "className": "text-start" }
-            ]
-        });
-        loadInventoryItems();
-    }
-
-    if ($('#monitorTable').length) {
-        $('#monitorTable').DataTable({
-            "scrollX": true, "order": [[6, "desc"]], "autoWidth": false,
-            "columnDefs": [
-                { "width": "8%", "targets": 0, "className": "text-center" },
-                { "width": "14%", "targets": 1, "className": "text-center" },
-                { "width": "20%", "targets": 2, "className": "text-start" },
-                { "width": "20%", "targets": 3, "className": "text-start" },
-                { "width": "14%", "targets": 4, "className": "text-center" },
-                { "width": "10%", "targets": 5, "className": "text-center" },
-                { "width": "14%", "targets": 6, "className": "text-center" }
-            ]
-        });
-        loadStatusRecords();
-    }
-
-    $(document).on('draw.dt', function() {
-        $('.page-link, .paginate_button').removeAttr('href').css('cursor', 'pointer');
+        document.body.classList.add('page-loaded');
     });
-});
+}
 
 /* ============================================================== */
 /* 6. MODULE: PURCHASE REQUESTS                                   */
@@ -866,6 +873,11 @@ async function saveMonRecord() {
 /* ============================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    if (document.body.classList.contains('login-body')) {
+        document.body.classList.add('page-loaded');
+    }
+
     document.querySelectorAll('.modal').forEach(modalElement => {
         modalElement.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
@@ -893,6 +905,14 @@ document.addEventListener('keydown', function(event) {
         selectedPRData = null; selectedItemData = null; selectedMonData = null;
 
         toggleSidebar(); return;
+    }
+
+    if (!isTyping && !isModalOpen) {
+        if (event.key === '1') { window.location.href = 'inside.html'; return; }
+        if (event.key === '2') { window.location.href = 'purchase.html'; return; }
+        if (event.key === '3') { window.location.href = 'item.html'; return; }
+        if (event.key === '4') { window.location.href = 'monitor.html'; return; }
+        if (event.key === '0') { toggleTheme(); return; }
     }
 
     if (isTyping || isSidebarOpen) return; 
