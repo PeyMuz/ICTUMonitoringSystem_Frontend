@@ -289,6 +289,9 @@ function formatLongText(text) {
 /* 5. DATATABLES INITIALIZATION                                   */
 /* ============================================================== */
 $(document).ready(function() {
+
+    loadDashboardData();
+
     if ($('#purchaseTable').length) {
         $('#purchaseTable').DataTable({
             "scrollX": true, "order": [[1, "desc"]], "autoWidth": false,
@@ -875,7 +878,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Universal Keyboard Shortcuts (Add, Edit, Delete, Sidebar)
 document.addEventListener('keydown', function(event) {
     const activeTag = document.activeElement.tagName.toLowerCase();
     const isTyping = activeTag === 'input' || activeTag === 'textarea';
@@ -883,7 +885,6 @@ document.addEventListener('keydown', function(event) {
     const sidebar = document.getElementById('sidebar');
     const isSidebarOpen = sidebar && sidebar.classList.contains('active');
 
-    // Sidebar Toggle
     if (event.key === 'Escape') {
         if (isModalOpen) { if (isTyping) event.stopPropagation(); return; }
 
@@ -896,7 +897,6 @@ document.addEventListener('keydown', function(event) {
 
     if (isTyping || isSidebarOpen) return; 
 
-    // Add Shortcut
     if (event.key === '+') {
         event.preventDefault();
         if (document.getElementById('purchaseTable')) openModal('add');
@@ -905,7 +905,6 @@ document.addEventListener('keydown', function(event) {
         return;
     }
 
-    // Edit Shortcut
     if (event.key === 'Enter' && !isModalOpen) {
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('edit'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('edit'); }
@@ -913,7 +912,6 @@ document.addEventListener('keydown', function(event) {
         return;
     }
 
-    // Delete Shortcut
     if ((event.key === 'Backspace' || event.key === 'Delete') && !isModalOpen) {
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('delete'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('delete'); }
@@ -922,7 +920,6 @@ document.addEventListener('keydown', function(event) {
     }
 }, true);
 
-// Handle "Enter" key on the Login Page
 const loginPassField = document.getElementById('loginPass');
 if (loginPassField) {
     loginPassField.addEventListener('keydown', function(event) {
@@ -931,4 +928,175 @@ if (loginPassField) {
             login();
         }
     });
+}
+
+/* ============================================================== */
+/* 10. MODULE: DASHBOARD                                          */
+/* ============================================================== */
+function animateValue(id, start, end, duration) {
+    if (start === end) { document.getElementById(id).innerText = end; return; }
+    const obj = document.getElementById(id);
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 4); 
+        obj.innerHTML = Math.floor(easeOut * (end - start) + start);
+        if (progress < 1) window.requestAnimationFrame(step);
+    };
+    window.requestAnimationFrame(step);
+}
+
+let dashGlobalItems = [];
+
+async function loadDashboardData() {
+    if (!document.getElementById('dashTotalWorking')) return;
+
+    const dateElement = document.getElementById('dashCurrentDate');
+    if (dateElement) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateElement.innerText = new Date().toLocaleDateString('en-US', options);
+    }
+
+    try {
+        const [items, prs, statuses] = await Promise.all([
+            apiFetch('/Inventory'), apiFetch('/PurchaseRequests'), apiFetch('/ItemStatus')
+        ]);
+
+        dashGlobalItems = items;
+
+        const workingCount = items.filter(i => i.itemStatus === 'Working').length;
+        const repairCount = items.filter(i => i.itemStatus === 'Under Repair').length;
+        const missingCount = items.filter(i => i.itemStatus === 'Missing').length;
+        const condemnedCount = items.filter(i => i.itemStatus === 'Condemned').length;
+        const returnedCount = items.filter(i => i.itemStatus === 'Returned').length;
+
+        animateValue('dashTotalWorking', 0, workingCount, 1200);
+        animateValue('dashTotalRepair', 0, repairCount, 1200);
+        animateValue('dashTotalMissing', 0, missingCount, 1200);
+        animateValue('dashTotalPRs', 0, prs.length, 1200);
+
+        new Chart(document.getElementById('statusChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'],
+                datasets: [{ data: [workingCount, repairCount, missingCount, condemnedCount, returnedCount], backgroundColor: ['#198754', '#fd7e14', '#dc3545', '#343a40', '#0dcaf0'], borderWidth: 0, hoverOffset: 4 }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } },
+
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const statusLabels = ['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'];
+                        openStatusModal(statusLabels[idx]);
+                    }
+                }
+            }
+        });
+        const feedBody = document.getElementById('dashActivityFeed');
+        if (feedBody) {
+            feedBody.innerHTML = ''; 
+            const recentAssignments = statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 4);
+            if (recentAssignments.length === 0) { feedBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No assignments found.</td></tr>'; } 
+            else {
+                recentAssignments.forEach(status => {
+                    const dateObj = new Date(status.dateAwarded);
+                    feedBody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold border-0" style="font-size: 13px;">${formatLongText(status.itemName)}</td>
+                            <td class="border-0" style="font-size: 13px;"><i class="fa-solid fa-user text-muted me-1"></i> ${status.personnelName}</td>
+                            <td class="text-muted border-0" style="font-size: 12px;">${dateObj.toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        const feedPRs = document.getElementById('dashRecentPRs');
+        if (feedPRs) {
+            feedPRs.innerHTML = '';
+            const recentPRs = [...prs].sort((a, b) => b.prNum - a.prNum).slice(0, 4);
+            if (recentPRs.length === 0) { feedPRs.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No PRs found.</td></tr>'; } 
+            else {
+                recentPRs.forEach(pr => {
+                    const dateObj = new Date(pr.prDate);
+                    feedPRs.innerHTML += `
+                        <tr>
+                            <td class="fw-bold border-0" style="font-size: 13px;">${pr.prNum}</td>
+                            <td class="text-muted border-0" style="font-size: 12px;">${dateObj.toLocaleDateString()}</td>
+                            <td class="border-0" style="font-size: 13px;">${formatLongText(pr.prDescription)}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        const feedItems = document.getElementById('dashRecentItems');
+        if (feedItems) {
+            feedItems.innerHTML = '';
+            const recentItems = [...items].sort((a, b) => new Date(b.dateChecked) - new Date(a.dateChecked)).slice(0, 4);
+            if (recentItems.length === 0) { feedItems.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No items found.</td></tr>'; } 
+            else {
+                recentItems.forEach(item => {
+                    let badgeClass = 'status-condemned';
+                    if(item.itemStatus === 'Working') badgeClass = 'status-working';
+                    else if(item.itemStatus === 'Under Repair') badgeClass = 'status-repair';
+                    else if(item.itemStatus === 'Missing') badgeClass = 'status-missing';
+                    else if(item.itemStatus === 'Returned') badgeClass = 'status-returned';
+                    const statusHtml = `<span class="status-badge ${badgeClass}" style="font-size: 11px; padding: 4px 8px;">${item.itemStatus}</span>`;
+
+                    feedItems.innerHTML += `
+                        <tr>
+                            <td class="fw-bold border-0" style="font-size: 13px;">${item.itemSerial}</td>
+                            <td class="border-0" style="font-size: 13px;">${formatLongText(item.itemName)}</td>
+                            <td class="border-0">${statusHtml}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error("Dashboard Load Error:", error);
+    }
+}
+
+function openStatusModal(statusType) {
+    const modalTitle = document.getElementById('dashModalTitle');
+    const tbody = document.getElementById('dashModalBody');
+    
+    modalTitle.innerText = `${statusType} Items`;
+    tbody.innerHTML = '';
+    
+    const filteredItems = dashGlobalItems.filter(i => i.itemStatus === statusType)
+                                         .sort((a, b) => new Date(b.dateChecked) - new Date(a.dateChecked));
+                                         
+    if (filteredItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">No items currently marked as ${statusType}.</td></tr>`;
+    } else {
+        filteredItems.forEach(item => {
+            let badgeClass = 'status-condemned';
+            if(item.itemStatus === 'Working') badgeClass = 'status-working';
+            else if(item.itemStatus === 'Under Repair') badgeClass = 'status-repair';
+            else if(item.itemStatus === 'Missing') badgeClass = 'status-missing';
+            else if(item.itemStatus === 'Returned') badgeClass = 'status-returned';
+            const statusHtml = `<span class="status-badge ${badgeClass}" style="font-size: 11px; padding: 4px 8px;">${item.itemStatus}</span>`;
+
+            const dateObj = new Date(item.dateChecked);
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold border-0" style="font-size: 13px; padding-left: 20px;">${item.itemSerial}</td>
+                    <td class="border-0" style="font-size: 13px;">${formatLongText(item.itemName)}</td>
+                    <td class="border-0">${statusHtml}</td>
+                    <td class="text-muted border-0" style="font-size: 12px;">${dateObj.toLocaleDateString()}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('dashboardDetailsModal')).show();
 }

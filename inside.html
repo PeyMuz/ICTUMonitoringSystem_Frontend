@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Dashboard - ICTU Monitoring</title>
+    <title>Dashboard - ICTU Inventory Monitoring System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body onload="loadUser()" class="dashboard-body">
+<body onload="loadUser()" class="dashboard-body theme-dashboard">
 
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
@@ -15,23 +17,19 @@
             <div class="hamburger-modern" onclick="toggleSidebar()">
                 <i class="fa-solid fa-bars"></i>
             </div>
-            <h1 class="header-tab-name">Dashboard Overview</h1>
+            <h1 class="header-tab-name">Dashboard Center</h1>
         </div>
 
         <div class="header-right">
             <div class="user-profile-container" onclick="toggleProfileDropdown()">
                 <i class="fa-solid fa-circle-user profile-icon"></i>
-                <span id="displayHeaderName" class="header-username">[Username Here]</span>
+                <span id="displayHeaderName" class="header-username">[Username]</span>
                 <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
 
                 <div id="profileDropdown" class="profile-dropdown">
                     <div class="dropdown-header">
-                        <strong id="dropName">Name Here</strong>
-                        <span id="dropRole">Role Here</span>
-                    </div>
-                    <div class="dropdown-body">
-                        <p><strong>Division:</strong> <span id="dropDiv">NCR</span></p>
-                        <p><strong>Section:</strong> <span id="dropSec">ICTU</span></p>
+                        <strong id="dropName">Name</strong>
+                        <span id="dropRole">Role</span>
                     </div>
                     <div class="dropdown-footer">
                         <button class="dropdown-logout" onclick="logout()">
@@ -46,7 +44,7 @@
 
     <nav id="sidebar" class="sidebar concept-sidebar">
         <div class="sidebar-logo-box">
-            <img src="Deeep.png" alt="DepEd Logo" class="sidebar-brand-logo">
+            <img src="Deeep.png" alt="DepEd Logo" class="sidebar-brand-logo" onerror="this.style.display='none'">
             <div class="close-btn-mobile" onclick="toggleSidebar()">
                 <i class="fa-solid fa-xmark"></i>
             </div>
@@ -56,7 +54,7 @@
             <span>ICTU Inventory<br>Monitoring System</span>
         </div>
 
-        <a href="inside.html" class="nav-item">
+        <a href="inside.html" class="nav-item active-nav">
             <i class="fa-solid fa-chart-line nav-icon"></i>
             <span class="nav-text">Dashboard</span>
         </a>
@@ -84,22 +82,151 @@
         </a>
     </nav>
 
-    <main class="data-table-main" style="display: flex; justify-content: center; align-items: flex-start;">
+    <main class="data-table-main" style="padding: 20px;">
         
-        <div class="modern-card" style="text-align: center; max-width: 600px; padding: 60px 40px; margin-top: 50px;">
-            <i class="fa-solid fa-chart-line" style="font-size: 60px; color: #114a91; margin-bottom: 20px;"></i>
-            <h2 class="card-title-custom" style="font-family: 'Arial Black', sans-serif; font-size: 32px; color: #1e293b;">Welcome Back!</h2>
-            <h3 id="displayFullName" style="font-family: Arial, sans-serif; color: #64748b; margin-top: 10px; font-weight: normal;">[FULL NAME OF USER]</h3>
-            <p id="displayPosition" style="color: #94a3b8; font-style: italic; margin-top: 5px;">[POSITION]</p>
-            
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
-                Dashboard metrics and data visualizations will appear here once connected to the API.
+        <div class="dashboard-welcome-banner mb-2" style="padding: 12px 25px;">
+            <h2 class="m-0 fw-bold" style="font-family: 'Arial', sans-serif; font-size: 15px; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px;">System Overview</h2>
+            <div id="dashCurrentDate" class="text-muted fw-bold" style="font-size: 15px;"></div>
+        </div>
+
+        <div class="row gx-2 mb-2">
+            <div class="col-md-3">
+                <div class="modern-card dashboard-stat-card shadow-sm working-card" onclick="openStatusModal('Working')">
+                    <div class="stat-content">
+                        <h6 class="stat-label">Working Items</h6>
+                        <h2 class="stat-number" id="dashTotalWorking">0</h2>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-desktop"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="modern-card dashboard-stat-card shadow-sm repair-card" onclick="openStatusModal('Under Repair')">
+                    <div class="stat-content">
+                        <h6 class="stat-label">Under Repair</h6>
+                        <h2 class="stat-number" id="dashTotalRepair">0</h2>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="modern-card dashboard-stat-card shadow-sm missing-card" onclick="openStatusModal('Missing')">
+                    <div class="stat-content">
+                        <h6 class="stat-label">Missing Items</h6>
+                        <h2 class="stat-number" id="dashTotalMissing">0</h2>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="modern-card dashboard-stat-card shadow-sm pr-card" onclick="window.location.href='purchase.html'">
+                    <div class="stat-content">
+                        <h6 class="stat-label">Total Purchase Requests</h6>
+                        <h2 class="stat-number" id="dashTotalPRs">0</h2>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row gx-2 mb-2">
+            <div class="col-md-3">
+                <div class="modern-card h-100 shadow-sm p-4 d-flex flex-column">
+                    <h6 class="fw-bold mb-3 text-uppercase" style="color: #64748b; font-size: 12px; letter-spacing: 1px;">Status Ratio</h6>
+                    <div style="position: relative; height: 180px; width: 100%;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="modern-card h-100 shadow-sm p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0 text-uppercase" style="color: #64748b; font-size: 12px; letter-spacing: 1px;">Recently Logged Items</h6>
+                        <a href="item.html" class="text-secondary" title="View All Items"><i class="fa-solid fa-arrow-right fs-6"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Serial</th><th>Item Name</th><th>Status</th></tr>
+                            </thead>
+                            <tbody id="dashRecentItems">
+                                <tr><td colspan="3" class="text-center text-muted py-3">Loading Items...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row gx-2 mb-2">
+            <div class="col-md-6">
+                <div class="modern-card h-100 shadow-sm p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0 text-uppercase" style="color: #64748b; font-size: 12px; letter-spacing: 1px;">Recent Purchase Requests</h6>
+                        <a href="purchase.html" class="text-secondary" title="View All Purchase Requests"><i class="fa-solid fa-arrow-right fs-6"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>PR Num</th><th>Date</th><th>Description</th></tr>
+                            </thead>
+                            <tbody id="dashRecentPRs">
+                                <tr><td colspan="3" class="text-center text-muted py-3">Loading Purchase Requests...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="modern-card h-100 shadow-sm p-4 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0 text-uppercase" style="color: #64748b; font-size: 12px; letter-spacing: 1px;">Recent Assignments</h6>
+                        <a href="monitor.html" class="text-secondary" title="View All Assignments"><i class="fa-solid fa-arrow-right fs-6"></i></a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Item Name</th><th>Assigned To</th><th>Date</th></tr>
+                            </thead>
+                            <tbody id="dashActivityFeed">
+                                <tr><td colspan="3" class="text-center text-muted py-3">Loading activity...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal fade" id="dashboardDetailsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-light border-bottom-0">
+                        <h5 class="modal-title fw-bold" id="dashModalTitle" style="color: #4338ca;">Status Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <table class="table table-hover align-middle mb-0" style="border-collapse: collapse;">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th style="padding-left: 20px;">Serial</th>
+                                        <th>Item Name</th>
+                                        <th>Status</th>
+                                        <th>Date Checked</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashModalBody">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="index.js"></script>
 </body>
 </html>
