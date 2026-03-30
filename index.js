@@ -5,6 +5,7 @@ const API_BASE_URL = "https://localhost:7040/api"
 let selectedPRData = null;
 let selectedItemData = null;
 let selectedMonData = null;
+let selectedUserData = null;
 
 /* ============================================================== */
 /* API COMMUNICATION UTILITY                                      */
@@ -36,6 +37,10 @@ async function apiFetch(endpoint, method = 'GET', body = null) {
 /* 2. CORE UI & SYSTEM (Sidebar, Dropdown, Theme, Fullscreen)     */
 /* ============================================================== */
 function toggleSidebar() {
+    const dropdown = document.getElementById('profileDropdown');
+    if (dropdown && dropdown.classList.contains('show')) {
+        toggleProfileDropdown(); 
+    }
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
@@ -62,13 +67,41 @@ function toggleSidebar() {
 }
 
 function toggleProfileDropdown() {
-    document.getElementById('profileDropdown').classList.toggle('show');
+    const dropdown = document.getElementById('profileDropdown');
+    const header = document.querySelector('.concept-header');
+    let overlay = document.getElementById('dropdownOverlay');
+    
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'dropdownOverlay';
+        overlay.className = 'sidebar-overlay';
+        overlay.style.zIndex = '1000';
+        overlay.onclick = toggleProfileDropdown;
+        document.body.appendChild(overlay);
+    }
+    
+    const isShowing = dropdown.classList.toggle('show');
+    
+    if (isShowing) {
+        if (header) header.style.zIndex = '1001';
+        overlay.style.display = 'block';
+        setTimeout(() => overlay.classList.add('active'), 10);
+    } else {
+        if (header) header.style.zIndex = '100';
+        
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+    }
 }
 
 window.onclick = function(event) {
-    if (!event.target.closest('.user-profile-container')) {
+    if (!event.target.closest('.user-profile-container') && !event.target.closest('#profileDropdown')) {
         const dropdown = document.getElementById('profileDropdown');
-        if (dropdown && dropdown.classList.contains('show')) dropdown.classList.remove('show');
+        if (dropdown && dropdown.classList.contains('show')) {
+            toggleProfileDropdown();
+        }
     }
 }
 
@@ -183,10 +216,20 @@ async function login() {
 
             const decoded = parseJwt(data.token);
 
-            const userRole = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Staff';
-            const userName = decoded['http://schemas.xmlsoap.org/ws/2005/06/identity/claims/name'] || user;
+            const userRole = decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || decoded.role || decoded.Role || 'Staff';
+            const userName = decoded['http://schemas.xmlsoap.org/ws/2005/06/identity/claims/name'] || decoded.unique_name || decoded.name || user;
 
-            const activeUser = { name: userName, username: user, position: userRole };
+            const fullName = decoded.FullName || userName;
+            const division = decoded.Division || 'N/A';
+            const section = decoded.Section || 'N/A';
+
+            const activeUser = { 
+                name: fullName, 
+                username: user, 
+                position: userRole,
+                division: division,
+                section: section
+            };
             localStorage.setItem('activeUser', JSON.stringify(activeUser));
 
             window.location.href = "inside.html";
@@ -209,39 +252,36 @@ function logout() {
     window.location.href = "log.html";
 }
 
-function loadUser() {
-    applyTheme();
-    setupActiveSidebar();
-
-    bindRowSelection('purchaseBody', 'btnEditAction', 'btnDeleteAction', cells => {
-        selectedPRData = cells ? { prNumber: cells[0].innerText, date: cells[1].innerText, description: cells[2].innerText } : null;
-    });
-
-    bindRowSelection('itemBody', 'btnEditItemAction', 'btnDeleteItemAction', cells => {
-        selectedItemData = cells ? { serial: cells[0].innerText, name: cells[1].innerText, status: cells[2].innerText, date: cells[3].innerText, remarks: cells[4].innerText } : null;
-    });
-
-    bindRowSelection('monitorBody', 'btnEditMonAction', 'btnDeleteMonAction', cells => {
-        selectedMonData = cells ? { id: cells[0].innerText, serial: cells[1].innerText, name: cells[2].innerText, personnel: cells[3].innerText, division: cells[4].innerText, section: cells[5].innerText, date: cells[6].innerText } : null;
-    });
-
-    const activeUserStr = localStorage.getItem('activeUser');
-    const token = localStorage.getItem('jwtToken');
-
-    if (!activeUserStr || !token) {
-        window.location.href = "log.html";
-        return
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
     }
+}
 
-    const activeUser = JSON.parse(activeUserStr);
+function loadUser() {
+    const activeUserStr = localStorage.getItem('activeUser');
+    if (activeUserStr) {
+        const activeUser = JSON.parse(activeUserStr);
+        
+        const headerName = document.getElementById('displayHeaderName');
+        if (headerName) headerName.innerText = activeUser.name;
+        
+        const dropName = document.getElementById('dropName');
+        if (dropName) dropName.innerText = activeUser.name;
+        
+        const dropRole = document.getElementById('dropRole');
+        if (dropRole) dropRole.innerText = activeUser.position;
 
-    const ids = ['displayFullName', 'displayPosition', 'displayHeaderName', 'dropName', 'dropRole'];
-    const values = [activeUser.name, activeUser.position, activeUser.name, activeUser.name, activeUser.position];
+        const dropDiv = document.getElementById('dropDiv');
+        if (dropDiv) dropDiv.innerText = activeUser.division;
 
-    ids.forEach((id, index) => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = values[index];
-    });
+        const dropSec = document.getElementById('dropSec');
+        if (dropSec) dropSec.innerText = activeUser.section;
+    }
 }
 
 /* ============================================================== */
@@ -305,6 +345,11 @@ if (typeof $ !== 'undefined') {
                     ]
                 });
                 await loadPurchaseRequests();
+
+                bindRowSelection('purchaseBody', 'btnEditAction', 'btnDeleteAction', (cells) => {
+                    if (cells) selectedPRData = { prNumber: cells[0].innerText, date: cells[1].innerText, description: cells[2].innerText };
+                    else selectedPRData = null;
+                });
             } 
             else if ($('#itemTable').length) {
                 $('#itemTable').DataTable({
@@ -318,6 +363,11 @@ if (typeof $ !== 'undefined') {
                     ]
                 });
                 await loadInventoryItems();
+
+                bindRowSelection('itemBody', 'btnEditItemAction', 'btnDeleteItemAction', (cells) => {
+                    if (cells) selectedItemData = { serial: cells[0].innerText, name: cells[1].innerText, status: cells[2].innerText, date: cells[3].innerText, remarks: cells[4].innerText };
+                    else selectedItemData = null;
+                });
             } 
             else if ($('#monitorTable').length) {
                 $('#monitorTable').DataTable({
@@ -333,7 +383,29 @@ if (typeof $ !== 'undefined') {
                     ]
                 });
                 await loadStatusRecords();
+
+                bindRowSelection('monitorBody', 'btnEditMonAction', 'btnDeleteMonAction', (cells) => {
+                    if (cells) selectedMonData = { id: cells[0].innerText, serial: cells[1].innerText, name: cells[2].innerText, personnel: cells[3].innerText, division: cells[4].innerText, section: cells[5].innerText, date: cells[6].innerText };
+                    else selectedMonData = null;
+                });
             }
+            else if ($('#usersTable').length) {
+                await loadAdminData(); 
+                
+                bindRowSelection('usersTableBody', 'btnEditUserAction', 'btnDeleteUserAction', (cells) => {
+                    if (cells) {
+                        const divSec = cells[3].innerText.split(' / ');
+                        selectedUserData = {
+                            username: cells[0].innerText,
+                            fullName: cells[1].innerText,
+                            role: cells[2].innerText,
+                            division: divSec[0].trim(),
+                            section: divSec[1] ? divSec[1].trim() : ''
+                        };
+                    } else selectedUserData = null;
+                });
+            }
+
         } catch (error) {
             console.error("Initialization Error:", error);
         }
@@ -341,6 +413,8 @@ if (typeof $ !== 'undefined') {
         $(document).on('draw.dt', function() {
             $('.page-link, .paginate_button').removeAttr('href').css('cursor', 'pointer');
         });
+
+        applyRoleBasedAccess();
 
         document.body.classList.add('page-loaded');
     });
@@ -837,7 +911,10 @@ async function saveMonRecord() {
                 section: section,
                 dateAwarded: date
             });
-            table.row.add([response.newAssignedId, serial, name, personnel, division, section, date]).draw(false);
+            
+            const exactSerial = response.trueSerial || response.TrueSerial || serial;
+
+            table.row.add([response.newAssignedId, exactSerial, name, personnel, division, section, date]).draw(false);
             showNotification('Status Record Added!', 'success');
             
         } else if (actionType === 'edit') {
@@ -871,7 +948,6 @@ async function saveMonRecord() {
 /* ============================================================== */
 /* 9. GLOBAL KEYBOARD SHORTCUTS & EVENT LISTENERS                 */
 /* ============================================================== */
-
 document.addEventListener('DOMContentLoaded', () => {
 
     if (document.body.classList.contains('login-body')) {
@@ -897,21 +973,50 @@ document.addEventListener('keydown', function(event) {
     const sidebar = document.getElementById('sidebar');
     const isSidebarOpen = sidebar && sidebar.classList.contains('active');
 
+    const collapseDropdown = () => {
+        const dropdown = document.getElementById('profileDropdown');
+        if (dropdown && dropdown.classList.contains('show')) toggleProfileDropdown();
+    };
+
     if (event.key === 'Escape') {
+ 
+        const resetModal = document.getElementById('resetPassModal');
+        if (resetModal && resetModal.classList.contains('show')) {
+            bootstrap.Modal.getInstance(resetModal).hide();
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
         if (isModalOpen) { if (isTyping) event.stopPropagation(); return; }
 
         document.querySelectorAll('tbody tr.table-active').forEach(row => row.classList.remove('table-active'));
         document.querySelectorAll('.btn-edit-modern, .btn-delete-modern').forEach(btn => btn.disabled = true);
-        selectedPRData = null; selectedItemData = null; selectedMonData = null;
+        selectedPRData = null; selectedItemData = null; selectedMonData = null; selectedUserData = null;
 
-        toggleSidebar(); return;
+        collapseDropdown(); 
+        toggleSidebar(); 
+        return;
     }
 
     if (!isTyping && !isModalOpen) {
+        const activeUserStr = localStorage.getItem('activeUser');
+        const role = activeUserStr ? JSON.parse(activeUserStr).position : 'Guest';
+
+        if (['1','2','3','4','5','0'].includes(event.key)) collapseDropdown(); // Clear dropdown on navigation
+
         if (event.key === '1') { window.location.href = 'inside.html'; return; }
-        if (event.key === '2') { window.location.href = 'purchase.html'; return; }
-        if (event.key === '3') { window.location.href = 'item.html'; return; }
-        if (event.key === '4') { window.location.href = 'monitor.html'; return; }
+        
+        if (role !== 'Guest') {
+            if (event.key === '2') { window.location.href = 'purchase.html'; return; }
+            if (event.key === '3') { window.location.href = 'item.html'; return; }
+            if (event.key === '4') { window.location.href = 'monitor.html'; return; }
+        }
+
+        if (role === 'Master') {
+            if (event.key === '5') { window.location.href = 'admin.html'; return; }
+        }
+        
         if (event.key === '0') { toggleTheme(); return; }
     }
 
@@ -919,23 +1024,29 @@ document.addEventListener('keydown', function(event) {
 
     if (event.key === '+') {
         event.preventDefault();
+        collapseDropdown();
         if (document.getElementById('purchaseTable')) openModal('add');
         if (document.getElementById('itemTable')) openItemModal('add');
         if (document.getElementById('monitorTable')) openMonModal('add');
+        if (document.getElementById('usersTable')) openUserModal('add');
         return;
     }
 
     if (event.key === 'Enter' && !isModalOpen) {
+        collapseDropdown();
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('edit'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('edit'); }
         if (selectedMonData && document.getElementById('monitorTable')) { event.preventDefault(); openMonModal('edit'); }
+        if (selectedUserData && document.getElementById('usersTable')) { event.preventDefault(); openUserModal('edit'); }
         return;
     }
 
     if ((event.key === 'Backspace' || event.key === 'Delete') && !isModalOpen) {
+        collapseDropdown();
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('delete'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('delete'); }
         if (selectedMonData && document.getElementById('monitorTable')) { event.preventDefault(); openMonModal('delete'); }
+        if (selectedUserData && document.getElementById('usersTable')) { event.preventDefault(); openUserModal('delete'); }
         return;
     }
 }, true);
@@ -1119,4 +1230,277 @@ function openStatusModal(statusType) {
     }
     
     bootstrap.Modal.getOrCreateInstance(document.getElementById('dashboardDetailsModal')).show();
+}
+
+/* ============================================================== */
+/* 11. ROLE-BASED ACCESS CONTROL (RBAC)                           */
+/* ============================================================== */
+function applyRoleBasedAccess() {
+    const activeUserStr = localStorage.getItem('activeUser');
+    if (!activeUserStr) return; // Not logged in yet
+
+    const activeUser = JSON.parse(activeUserStr);
+    const role = activeUser.position;
+
+    // 0. ADMIN PAGE LOCKDOWN
+    const currentPath = window.location.pathname.toLowerCase();
+    if (currentPath.includes('admin.html')) {
+        if (role !== 'Master') {
+            window.location.href = 'inside.html';
+            return;
+        }
+    }
+
+    // 1. GUEST RESTRICTIONS (Strict Lockdown)
+    if (role === 'Guest') {
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const href = item.getAttribute('href');
+            const onClick = item.getAttribute('onclick') || '';
+            
+            if (href !== 'inside.html' && !onClick.includes('toggleTheme')) {
+                item.style.display = 'none';
+            }
+        });
+
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.includes('purchase.html') || 
+            currentPath.includes('item.html') || 
+            currentPath.includes('monitor.html')) {
+            window.location.href = 'inside.html';
+            return;
+        }
+
+        if (currentPath.includes('inside.html') || currentPath === '/' || currentPath.endsWith('//')) {
+            document.querySelectorAll('.modern-card a.text-secondary').forEach(arrow => {
+                arrow.style.display = 'none';
+            });
+            
+            const prCard = document.querySelector('.pr-card');
+            if (prCard) {
+                prCard.removeAttribute('onclick');
+                prCard.style.cursor = 'default'; 
+            }
+        }
+    }
+
+    // 2. EMPLOYEE / STAFF RESTRICTIONS (No CRUD Actions)
+    if (role === 'Employee' || role === 'Staff' || role === 'Guest') {
+        const actionButtons = document.querySelectorAll('.btn-add-modern, .btn-edit-modern, .btn-delete-modern');
+        actionButtons.forEach(btn => {
+            btn.style.display = 'none';
+        });
+    }
+
+    // 3. ANYONE WHO IS NOT A MASTER (Hide Control Center Link)
+    if (role !== 'Master') {
+        document.querySelectorAll('.admin-only-link').forEach(link => {
+            link.style.display = 'none';
+        });
+    }
+}
+
+/* ============================================================== */
+/* 12. MASTER CONTROL CENTER (ADMIN.HTML)                         */
+/* ============================================================== */
+async function loadAdminData() {
+    try {
+        const [users, logs] = await Promise.all([
+            apiFetch('/Admin/users'), 
+            apiFetch('/Admin/logs')
+        ]);
+
+        if ($.fn.DataTable.isDataTable('#usersTable')) {
+            $('#usersTable').DataTable().destroy();
+        }
+
+        const userTbody = document.getElementById('usersTableBody');
+        userTbody.innerHTML = '';
+        users.forEach(u => {
+            let roleBadge = 'bg-secondary';
+            if (u.role === 'Master') roleBadge = 'bg-danger';
+            if (u.role === 'Administrator') roleBadge = 'bg-primary';
+            if (u.role === 'Employee') roleBadge = 'bg-success';
+
+            userTbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold">${u.username}</td>
+                    <td>${u.fullName}</td>
+                    <td><span class="badge ${roleBadge}">${u.role}</span></td>
+                    <td class="text-muted">${u.division} / ${u.section}</td>
+                </tr>
+            `;
+        });
+
+        $('#usersTable').DataTable({ 
+            "pageLength": 10, 
+            "lengthChange": false,
+            "autoWidth": false
+        });
+
+        // 4. Populate Audit Logs HTML
+        const logTbody = document.getElementById('logsTableBody');
+        logTbody.innerHTML = '';
+        logs.forEach(l => {
+            const time = new Date(l.timestamp).toLocaleString();
+            let actionColor = '#94a3b8';
+            if (l.actionType.includes('CREATE')) actionColor = '#4ade80'; 
+            if (l.actionType.includes('UPDATE')) actionColor = '#fbbf24'; 
+            if (l.actionType.includes('DELETE')) actionColor = '#f87171'; 
+
+            logTbody.innerHTML += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="width: 25%; color: #64748b;">[${time}]</td>
+                    <td style="width: 15%; color: #38bdf8; font-weight: bold;">${l.username}</td>
+                    <td style="width: 15%; color: ${actionColor};">${l.actionType}</td>
+                    <td style="width: 45%;">${l.description}</td>
+                </tr>
+            `;
+        });
+
+    } catch (error) {
+        console.error("Admin Load Error:", error);
+        alert("Failed to load secure admin data.");
+    }
+}
+
+function openUserModal(actionType) {
+    document.getElementById('userModal').setAttribute('data-current-action', actionType);
+    const title = document.querySelector('#userModal .modal-title');
+    
+    const userField = document.getElementById('modUserUsername');
+    const passField = document.getElementById('modUserPassword');
+    const nameField = document.getElementById('modUserFullName');
+    const roleField = document.getElementById('modUserRole');
+    const divField = document.getElementById('modUserDiv');
+    const secField = document.getElementById('modUserSec');
+    
+    const saveBtn = document.getElementById('btnSaveUser');
+    const cancelBtn = document.getElementById('btnCancelUser');
+
+    const resetBtn = document.getElementById('btnResetPass');
+
+    [userField, passField, nameField, roleField, divField, secField].forEach(el => { el.readOnly = false; el.disabled = false; });
+    
+    if (actionType === 'add') {
+        title.textContent = "Create New Account";
+        userField.value = ''; passField.value = ''; nameField.value = ''; 
+        roleField.value = 'Guest'; divField.value = 'NCR'; secField.value = 'ICTU';
+        passField.closest('.col-md-6').style.display = 'block';
+        
+        saveBtn.textContent = "Create User"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
+        
+        if(resetBtn) resetBtn.style.display = 'none';
+
+    } else if (actionType === 'edit') {
+        title.textContent = "Edit User Privileges";
+        userField.value = selectedUserData.username; userField.readOnly = true;
+        nameField.value = selectedUserData.fullName; roleField.value = selectedUserData.role;
+        divField.value = selectedUserData.division; secField.value = selectedUserData.section;
+        passField.closest('.col-md-6').style.display = 'none';
+        
+        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
+
+        if(resetBtn) resetBtn.style.display = 'block';
+
+    } else if (actionType === 'delete') {
+        title.textContent = "Terminate Account";
+        userField.value = selectedUserData.username; nameField.value = selectedUserData.fullName; 
+        roleField.value = selectedUserData.role; divField.value = selectedUserData.division; secField.value = selectedUserData.section;
+        passField.closest('.col-md-6').style.display = 'none'; // Hide Password
+        [userField, nameField, roleField, divField, secField].forEach(el => { el.readOnly = true; el.disabled = true; });
+        
+        saveBtn.textContent = "Delete User"; saveBtn.className = "btn btn-modern btn-danger px-4";
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
+
+        if(resetBtn) resetBtn.style.display = 'none';
+    }
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
+}
+
+async function saveUserRecord() {
+    const actionType = document.getElementById('userModal').getAttribute('data-current-action');
+    const username = document.getElementById('modUserUsername').value;
+    const btnSave = document.getElementById('btnSaveUser');
+    const originalText = btnSave.textContent;
+
+    btnSave.textContent = "Processing..."; btnSave.disabled = true;
+
+    try {
+        if (actionType === 'delete') {
+            await apiFetch(`/Admin/users/${username}`, 'DELETE');
+            showNotification('User Terminated Successfully!', 'delete');
+            document.getElementById('btnEditUserAction').disabled = true;
+            document.getElementById('btnDeleteUserAction').disabled = true;
+        } else {
+            const payload = {
+                Username: username, Password: document.getElementById('modUserPassword').value, FullName: document.getElementById('modUserFullName').value,
+                Role: document.getElementById('modUserRole').value, Division: document.getElementById('modUserDiv').value, Section: document.getElementById('modUserSec').value
+            };
+
+            if (actionType === 'add') {
+                if (!payload.Username || !payload.Password) throw new Error("Username and Password are required!");
+                const response = await apiFetch('/Auth/seed-admin', 'POST', payload);
+                showNotification(response.message, 'success');
+            } else if (actionType === 'edit') {
+                const response = await apiFetch(`/Admin/users/${username}`, 'PUT', payload);
+                showNotification(response.message, 'success');
+            }
+        }
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        await loadAdminData(); // Refresh the table
+    } catch (error) {
+        showNotification(error.message, "error");
+    } finally {
+        btnSave.textContent = originalText; btnSave.disabled = false;
+    }
+}
+
+function resetUserPassword() {
+    // Clear any old text and open the custom modal
+    document.getElementById('newTempPassword').value = '';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('resetPassModal')).show();
+}
+
+async function confirmPasswordReset() {
+    const username = document.getElementById('modUserUsername').value.trim();
+    const newPassword = document.getElementById('newTempPassword').value;
+    const confirmBtn = document.getElementById('btnConfirmReset');
+
+    if (newPassword.length < 6) {
+        showNotification("Password must be at least 6 characters long.", 'error');
+        return;
+    }
+
+    const originalText = confirmBtn.textContent;
+    confirmBtn.textContent = "Resetting...";
+    confirmBtn.disabled = true;
+
+    try {
+        const response = await apiFetch(`/Admin/users/${username}/reset-password`, 'PATCH', { NewPassword: newPassword });
+        
+        showNotification(response.message, 'success');
+        
+        bootstrap.Modal.getInstance(document.getElementById('resetPassModal')).hide();
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        
+        await loadAdminData(); // Refresh the terminal log
+    } catch (error) {
+        showNotification("Error: " + error.message, 'error');
+    } finally {
+        confirmBtn.textContent = originalText;
+        confirmBtn.disabled = false;
+    }
+}
+
+const tempPassField = document.getElementById('newTempPassword');
+if (tempPassField) {
+    tempPassField.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            confirmPasswordReset();
+        }
+    });
 }

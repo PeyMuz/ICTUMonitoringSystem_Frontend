@@ -603,17 +603,24 @@ body.dashboard-body.page-loaded {
     color: #333333;
     width: 260px;
     border-radius: 8px;
-    box-shadow: 0 8px 20px rbga(0,0,0,0.15);
-    display: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+    display: flex; 
     flex-direction: column;
     z-index: 2000;
     overflow: hidden;
     cursor: default;
     border: 1px solid #e2e2e2;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-15px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), visibility 0.3s ease;
 }
 
 .profile-dropdown.show {
-    display: flex;
+    /* Trigger the animation */
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .profile-dropdown .dropdown-header {
@@ -1004,6 +1011,10 @@ html:not(.dark-mode) body.theme-dashboard .concept-header { background-color: #4
 .theme-dashboard .card-title-custom { color: #4338ca; }
 .dark-mode .theme-dashboard .card-title-custom { color: #818cf8; }
 
+html:not(.dark-mode) body.theme-admin .concept-header { background-color: #be123c; }
+.theme-admin .card-title-custom { color: #be123c; }
+.dark-mode .theme-admin .card-title-custom { color: #fda4af; }
+
 /* ============================================================== */
 /* STATUS BADGES                                                  */
 /* ============================================================== */
@@ -1189,5 +1200,61 @@ html:not(.dark-mode) body.theme-dashboard .concept-header { background-color: #4
     color: #94a3b8 !important;
 }
 .dark-mode .modern-card a.text-secondary:hover {
+    color: #38bdf8 !important;
+}
+
+/* ============================================================== */
+/* UI ALIGNMENT & DATATABLES FIXES                                */
+/* ============================================================== */
+
+.nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.nav-item i {
+    width: 30px; 
+    text-align: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.modern-card .dataTables_wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.modern-card .dataTables_wrapper > .row:nth-child(2) {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+.modern-card .dataTables_wrapper > .row:nth-child(3) {
+    margin-top: auto;
+    padding-top: 15px;
+}
+
+/* ============================================================== */
+/* DYNAMIC SIDEBAR ACTIVE STATE                                   */
+/* ============================================================== */
+
+/* Base Active Style */
+.sidebar .nav-item.active {
+    font-weight: bold;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+    /* Light Mode Highlight (White background, Dark Blue text AND icon) */
+html:not(.dark-mode) .sidebar .nav-item.active,
+html:not(.dark-mode) .sidebar .nav-item.active i {
+    background-color: #ffffff !important;
+    color: #114a91 !important; 
+}
+
+/* Dark Mode Highlight (Subtle Blue Glow, Bright Blue text AND icon) */
+.dark-mode .sidebar .nav-item.active,
+.dark-mode .sidebar .nav-item.active i {
+    background-color: rgba(56, 189, 248, 0.15) !important;
     color: #38bdf8 !important;
 }
