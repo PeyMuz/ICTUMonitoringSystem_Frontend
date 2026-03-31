@@ -93,8 +93,8 @@
         </a>
     </nav>
 
-    <main class="data-table-main">
-        <div class="modern-card">
+    <main class="data-table-main d-flex flex-column" style="height: calc(100vh - 60px);">
+        <div class="modern-card d-flex flex-column flex-grow-1" style="min-height: 0;">
             <div class="modern-card-header">
                 <div class="title-area">
                     <h2 class="card-title-custom" style="font-family: 'Arial Black', sans-serif; margin: 0; font-size: 26px;">Inventory Items List</h2>                    <p class="card-desc" style="color: #6c757d; font-style: italic; margin-top: 5px;">Manage and track all inventory items here</p>
@@ -113,7 +113,7 @@
                 </div>
             </div>
 
-            <div class="modern-table-wrapper">
+            <div class="modern-table-wrapper flex-grow-1" style="min-height: 0;">
                 <table id="itemTable" class="table table-bordered table-striped" style="width: 100%;">
                     <thead>
                         <tr>

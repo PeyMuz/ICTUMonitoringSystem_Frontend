@@ -93,8 +93,8 @@
         </a>
     </nav>
 
-    <main class="data-table-main">
-        <div class="modern-card">
+    <main class="data-table-main d-flex flex-column" style="height: calc(100vh - 60px);">
+        <div class="modern-card d-flex flex-column flex-grow-1" style="min-height: 0;">
             <div class="modern-card-header">
                 <div class="title-area">
                     <h2 class="card-title-custom" style="font-family: 'Arial Black', sans-serif; margin: 0; font-size: 26px;">Item Status List</h2>
@@ -114,7 +114,7 @@
                 </div>
             </div>
 
-            <div class="modern-table-wrapper">
+            <div class="modern-table-wrapper flex-grow-1" style="min-height: 0;">
                 <table id="monitorTable" class="table table-bordered table-striped" style="width: 100%;">
                     <thead>
                         <tr>
@@ -134,7 +134,7 @@
                             <td>Dell Optiplex 7000</td>
                             <td>Juan Dela Cruz</td>
                             <td>NCR</td>
-                            <td>ICT</td>
+                            <td>ICTU</td>
                             <td>2026-03-24</td>
                         </tr>
                     </tbody>
@@ -171,10 +171,8 @@
                             <input type="text" class="form-control" id="modalMonPersonnel" placeholder="Enter Personnel Name...">
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Division:</label>
-                            <select class="form-select" id="modalMonDivision">
-                                <option value="NCR" selected>NCR</option>
+                        <div class="col-md-6 mb-3"> <label class="form-label fw-bold">Division:</label>
+                            <select class="form-select" id="modalMonDivision"> <option value="NCR" selected>NCR</option>
                                 <option value="Caloocan City">Caloocan City</option>
                                 <option value="Las Piñas City">Las Piñas City</option>
                                 <option value="Makati City">Makati City</option>
@@ -191,13 +189,13 @@
                                 <option value="San Juan City">San Juan City</option>
                                 <option value="Taguig City - Pateros">Taguig City - Pateros</option>
                                 <option value="Valenzuela City">Valenzuela City</option>
+                                <option value="Other">Other...</option>
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Section:</label>
-                            <select class="form-select" id="modalMonSection">
-                                <option value="ICT" selected>ICT</option>
+                            <select class="form-select" id="modalMonSection"> <option value="ICTU" selected>ICTU</option>
                                 <option value="ORD">ORD</option>
                                 <option value="ARD">ARD</option>
                                 <option value="LEGAL">LEGAL</option>
@@ -220,6 +218,7 @@
                                 <option value="CASH">CASH</option>
                                 <option value="PROCUREMENT">PROCUREMENT</option>
                                 <option value="FINANCE">FINANCE</option>
+                                <option value="Other">Other...</option>
                             </select>
                         </div>
 

@@ -22,30 +22,30 @@
             <h1 class="header-tab-name">Master Control Center</h1>
         </div>
 
-        <div class="header-right d-flex align-items-center" style="position: relative;">
+        <div class="header-right">
             <div class="user-profile-container" onclick="toggleProfileDropdown()">
                 <i class="fa-solid fa-shield-halved profile-icon"></i>
                 <span id="displayHeaderName" class="header-username">[Username]</span>
                 <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-            </div>
-            
-            <i class="fa-solid fa-expand ms-4" onclick="toggleFullscreen()" style="cursor: pointer; font-size: 1.2rem; color: #f8fafc;" title="Toggle Fullscreen"></i>
-            
-            <div id="profileDropdown" class="profile-dropdown" style="right: 40px;">
-                <div class="dropdown-header">
-                    <strong id="dropName">Name Here</strong>
-                    <span id="dropRole">Role Here</span>
-                </div>
-                <div class="dropdown-body">
-                    <p><strong>Division:</strong> <span id="dropDiv">NCR</span></p>
-                    <p><strong>Section:</strong> <span id="dropSec">ICTU</span></p>
-                </div>
-                <div class="dropdown-footer">
-                    <button class="dropdown-logout" onclick="logout()">
-                        <i class="fa-solid fa-right-from-bracket"></i> Log Out
-                    </button>
+
+                <div id="profileDropdown" class="profile-dropdown">
+                    <div class="dropdown-header">
+                        <strong id="dropName">Name Here</strong>
+                        <span id="dropRole">Role Here</span>
+                    </div>
+                    <div class="dropdown-body">
+                        <p><strong>Division:</strong> <span id="dropDiv">NCR</span></p>
+                        <p><strong>Section:</strong> <span id="dropSec">ICTU</span></p>
+                    </div>
+                    <div class="dropdown-footer">
+                        <button class="dropdown-logout" onclick="logout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Log Out
+                        </button>
+                    </div>
                 </div>
             </div>
+            
+            <i class="fa-solid fa-expand fullscreen-icon" onclick="toggleFullscreen()"></i>
         </div>
     </header>
 
@@ -176,13 +176,55 @@
                                     <option value="Master">Master</option>
                                 </select>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Division:</label>
-                                <input type="text" class="form-control" id="modUserDiv" value="NCR">
+                                <div class="col-md-6 mb-3"> <label class="form-label fw-bold">Division:</label>
+                                <select class="form-select" id="modUserDiv"> <option value="NCR" selected>NCR</option>
+                                    <option value="Caloocan City">Caloocan City</option>
+                                    <option value="Las Piñas City">Las Piñas City</option>
+                                    <option value="Makati City">Makati City</option>
+                                    <option value="Malabon City">Malabon City</option>
+                                    <option value="Mandaluyong City">Mandaluyong City</option>
+                                    <option value="Manila">Manila</option>
+                                    <option value="Marikina City">Marikina City</option>
+                                    <option value="Muntinlupa City">Muntinlupa City</option>
+                                    <option value="Navotas City">Navotas City</option>
+                                    <option value="Parañaque City">Parañaque City</option>
+                                    <option value="Pasay City">Pasay City</option>
+                                    <option value="Pasig City">Pasig City</option>
+                                    <option value="Quezon City">Quezon City</option>
+                                    <option value="San Juan City">San Juan City</option>
+                                    <option value="Taguig City - Pateros">Taguig City - Pateros</option>
+                                    <option value="Valenzuela City">Valenzuela City</option>
+                                    <option value="Other">Other...</option>
+                                </select>
                             </div>
-                            <div class="col-md-4 mb-3">
+
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Section:</label>
-                                <input type="text" class="form-control" id="modUserSec" value="ICTU">
+                                <select class="form-select" id="modUserSec"> <option value="ICTU" selected>ICTU</option>
+                                    <option value="ORD">ORD</option>
+                                    <option value="ARD">ARD</option>
+                                    <option value="LEGAL">LEGAL</option>
+                                    <option value="PAU">PAU</option>
+                                    <option value="LRPS">LRPS</option>
+                                    <option value="CLMD">CLMD</option>
+                                    <option value="LRMS">LRMS</option>
+                                    <option value="ESSD">ESSD</option>
+                                    <option value="SHNU">SHNU</option>
+                                    <option value="QAD">QAD</option>
+                                    <option value="FTAD">FTAD</option>
+                                    <option value="PPRD">PPRD</option>
+                                    <option value="HRDD">HRDD</option>
+                                    <option value="NEAP">NEAP</option>
+                                    <option value="ASD">ASD</option>
+                                    <option value="RPSU">RPSU</option>
+                                    <option value="PERSONNEL">PERSONNEL</option>
+                                    <option value="RECORDS">RECORDS</option>
+                                    <option value="AMS">AMS</option>
+                                    <option value="CASH">CASH</option>
+                                    <option value="PROCUREMENT">PROCUREMENT</option>
+                                    <option value="FINANCE">FINANCE</option>
+                                    <option value="Other">Other...</option>
+                                </select>
                             </div>
                         </div>
                     </div>

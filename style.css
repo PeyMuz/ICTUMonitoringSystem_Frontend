@@ -444,14 +444,18 @@ body.dashboard-body.page-loaded {
 }
 
 .hamburger-modern {
-    font-size: 22px;
+    background: transparent;
+    margin-right: 15px;
+    display: inline-flex;
+    align-items: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
     cursor: pointer;
-    transition: color 0.2s;
-    padding-right: 15px;
+    font-size: 20px;
 }
 
 .hamburger-modern:hover {
-    color: #ffc107;
+    transform: scale(1.2);
+    opacity: 0.8;
 }
 
 .header-tab-name {
@@ -581,7 +585,7 @@ body.dashboard-body.page-loaded {
 }
 
 .user-profile-container:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(0,0,0,0.35);
 }
 
 .header-username {
@@ -691,8 +695,8 @@ body.dashboard-body.page-loaded {
 
 .data-table-main {
     background-color: #e2e2e2;
-    min-height: calc(100vh - 110px);
-    padding: 30px;
+    min-height: calc(100vh - 60px);
+    padding: 20px;
 }
 
 .modern-card {
@@ -765,14 +769,17 @@ body.dashboard-body.page-loaded {
 }
 
 .modern-table-wrapper table th {
-    background-color: #d1d5db !important;
-    color: #000000 !important;
-    border: 1px solid #9ca3af !important;
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1px solid #cbd5e1 !important;
     position: static;
 }
 
 .modern-table-wrapper table td {
-    border: 1px solid #9ca3af !important;
+    border: 1px solid #cbd5e1 !important;
 }
 
 /* ============================================================== */
@@ -1131,6 +1138,17 @@ html:not(.dark-mode) body.theme-admin .concept-header { background-color: #be123
 .dark-mode .pr-card { border-left-color: #818cf8; }
 .dark-mode .pr-card .stat-icon { color: #818cf8; }
 
+/* Tighten Dashboard Table Rows to prevent screen overflow */
+.theme-dashboard .table-responsive .table td {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.theme-dashboard .table-responsive .table th {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
 /* ============================================================== */
 /* DASHBOARD WELCOME BANNER                                       */
 /* ============================================================== */
@@ -1157,7 +1175,6 @@ html:not(.dark-mode) body.theme-admin .concept-header { background-color: #be123
     text-transform: uppercase;
     letter-spacing: 0.8px;
     border-bottom: 2px solid #e2e8f0 !important;
-    border-top: none !important;
 }
 
 .dark-mode .dashboard-welcome-banner {
@@ -1257,4 +1274,44 @@ html:not(.dark-mode) .sidebar .nav-item.active i {
 .dark-mode .sidebar .nav-item.active i {
     background-color: rgba(56, 189, 248, 0.15) !important;
     color: #38bdf8 !important;
+}
+
+/* ============================================================== */
+/* MICRO-INTERACTIONS & HOVER ANIMATIONS                          */
+/* ============================================================== */
+
+.dropdown-arrow {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+.hamburger-modern {
+    transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.2s ease !important;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.hamburger-modern:hover {
+    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.15) !important; /* Overrides the yellow */
+    opacity: 1 !important;
+}
+
+.fullscreen-icon {
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+}
+.fullscreen-icon:hover {
+    transform: scale(1.2);
+    opacity: 0.8;
+}
+
+.close-btn-mobile {
+    transition: transform 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+}
+.close-btn-mobile:hover {
+    transform: rotate(90deg);
+    color: #ef4444;
 }

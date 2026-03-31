@@ -39,7 +39,7 @@ async function apiFetch(endpoint, method = 'GET', body = null) {
 function toggleSidebar() {
     const dropdown = document.getElementById('profileDropdown');
     if (dropdown && dropdown.classList.contains('show')) {
-        toggleProfileDropdown(); 
+        window.forceCloseDropdown(); 
     }
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -66,52 +66,60 @@ function toggleSidebar() {
     }
 }
 
-function toggleProfileDropdown() {
-    const dropdown = document.getElementById('profileDropdown');
-    const header = document.querySelector('.concept-header');
-    let overlay = document.getElementById('dropdownOverlay');
-    
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'dropdownOverlay';
-        overlay.className = 'sidebar-overlay';
-        overlay.style.zIndex = '1000';
-        overlay.onclick = toggleProfileDropdown;
-        document.body.appendChild(overlay);
-    }
-    
-    const isShowing = dropdown.classList.toggle('show');
-    
-    if (isShowing) {
-        if (header) header.style.zIndex = '1001';
-        overlay.style.display = 'block';
-        setTimeout(() => overlay.classList.add('active'), 10);
-    } else {
-        if (header) header.style.zIndex = '100';
-        
-        overlay.classList.remove('active');
-        setTimeout(() => {
-            overlay.style.display = 'none';
-        }, 300);
-    }
-}
+window.toggleProfileDropdown = function() {};
 
-window.onclick = function(event) {
-    if (!event.target.closest('.user-profile-container') && !event.target.closest('#profileDropdown')) {
-        const dropdown = document.getElementById('profileDropdown');
-        if (dropdown && dropdown.classList.contains('show')) {
-            toggleProfileDropdown();
-        }
+window.forceCloseDropdown = function() {
+    const dropdown = document.getElementById('profileDropdown');
+    const arrow = document.querySelector('.dropdown-arrow');
+    if (dropdown && dropdown.classList.contains('show')) {
+        dropdown.classList.remove('show');
+        if (arrow) arrow.classList.remove('open');
     }
-}
+};
+
+window.addEventListener('click', function(event) {
+    const profileContainer = event.target.closest('.user-profile-container');
+    const dropdown = document.getElementById('profileDropdown');
+    const arrow = document.querySelector('.dropdown-arrow');
+
+    if (!dropdown) return;
+
+    if (profileContainer) {
+        if (event.target.closest('.profile-dropdown')) return;
+
+        if (dropdown.classList.contains('show')) {
+            window.forceCloseDropdown();
+        } else {
+            dropdown.classList.add('show');
+            if (arrow) arrow.classList.add('open');
+        }
+    } else {
+        window.forceCloseDropdown();
+    }
+});
 
 function toggleFullscreen() {
     if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => console.log(`Error attempting to enable fullscreen: ${err.message}`));
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
     } else {
-        if (document.exitFullscreen) document.exitFullscreen();
+        document.exitFullscreen();
     }
 }
+
+document.addEventListener('fullscreenchange', () => {
+    const fsIcon = document.querySelector('.fullscreen-icon');
+    if (fsIcon) {
+        if (document.fullscreenElement) {
+            fsIcon.classList.remove('fa-expand');
+            fsIcon.classList.add('fa-compress');
+        } else {
+            fsIcon.classList.remove('fa-compress');
+            fsIcon.classList.add('fa-expand');
+        }
+    }
+});
 
 function setupActiveSidebar() {
     const currentPath = window.location.pathname.split('/').pop();
@@ -798,7 +806,7 @@ function openMonModal(actionType) {
     if (actionType === 'add') {
         title.textContent = "Add Status Record";
         idContainer.style.display = 'none'; nameContainer.style.display = 'none';
-        serialField.value = ""; personnelField.value = ""; divisionField.value = "NCR"; sectionField.value = "ICT"; dateField.value = "";
+        serialField.value = ""; personnelField.value = ""; divisionField.value = "NCR"; sectionField.value = "ICTU"; dateField.value = "";
         saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'edit') {
@@ -945,6 +953,42 @@ async function saveMonRecord() {
     }
 }
 
+// --- LIVE AUTO-FILL FOR PERSONNEL ---
+const personnelInput = document.getElementById('modalMonPersonnel');
+if (personnelInput) {
+    let personnelTimer;
+    
+    personnelInput.addEventListener('input', function(e) {
+        clearTimeout(personnelTimer); 
+        
+        const userVal = e.target.value.trim();
+        const actionType = document.getElementById('monActionModal').getAttribute('data-current-action');
+
+        if (actionType === 'add' && userVal.length >= 3) {
+            
+            personnelTimer = setTimeout(async () => {
+                try {
+                    const userData = await apiFetch(`/Auth/user-info/${encodeURIComponent(userVal)}`);
+                    
+                    const divSelect = document.getElementById('modalMonDivision');
+                    const secSelect = document.getElementById('modalMonSection');
+                    
+                    if (Array.from(divSelect.options).some(o => o.value === userData.division)) {
+                        divSelect.value = userData.division;
+                    } else divSelect.value = "Other";
+
+                    if (Array.from(secSelect.options).some(o => o.value === userData.section)) {
+                        secSelect.value = userData.section;
+                    } else secSelect.value = "Other";
+                    
+                } catch (error) {
+                    
+                }
+            }, 500);
+        }
+    });
+}
+
 /* ============================================================== */
 /* 9. GLOBAL KEYBOARD SHORTCUTS & EVENT LISTENERS                 */
 /* ============================================================== */
@@ -975,7 +1019,8 @@ document.addEventListener('keydown', function(event) {
 
     const collapseDropdown = () => {
         const dropdown = document.getElementById('profileDropdown');
-        if (dropdown && dropdown.classList.contains('show')) toggleProfileDropdown();
+        if (dropdown && dropdown.classList.contains('show')) 
+            window.forceCloseDropdown();
     };
 
     if (event.key === 'Escape') {
@@ -1130,7 +1175,7 @@ async function loadDashboardData() {
         const feedBody = document.getElementById('dashActivityFeed');
         if (feedBody) {
             feedBody.innerHTML = ''; 
-            const recentAssignments = statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 4);
+            const recentAssignments = statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 3);
             if (recentAssignments.length === 0) { feedBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No assignments found.</td></tr>'; } 
             else {
                 recentAssignments.forEach(status => {
@@ -1149,7 +1194,7 @@ async function loadDashboardData() {
         const feedPRs = document.getElementById('dashRecentPRs');
         if (feedPRs) {
             feedPRs.innerHTML = '';
-            const recentPRs = [...prs].sort((a, b) => b.prNum - a.prNum).slice(0, 4);
+            const recentPRs = [...prs].sort((a, b) => b.prNum - a.prNum).slice(0, 3);
             if (recentPRs.length === 0) { feedPRs.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No PRs found.</td></tr>'; } 
             else {
                 recentPRs.forEach(pr => {
