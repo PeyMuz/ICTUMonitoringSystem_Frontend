@@ -68,12 +68,26 @@ function toggleSidebar() {
 
 window.toggleProfileDropdown = function() {};
 
+// Dedicated helper to safely close the dropdown from anywhere
 window.forceCloseDropdown = function() {
     const dropdown = document.getElementById('profileDropdown');
     const arrow = document.querySelector('.dropdown-arrow');
+    const profileContainer = document.querySelector('.user-profile-container');
+    const overlay = document.getElementById('profileOverlay');
+    const header = document.querySelector('.concept-header'); // Grab the header
+
     if (dropdown && dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
+        dropdown.style.zIndex = ''; 
         if (arrow) arrow.classList.remove('open');
+        if (profileContainer) {
+            profileContainer.classList.remove('active');
+            profileContainer.style.zIndex = ''; 
+        }
+        if (header) {
+            header.style.zIndex = ''; // Lower the header back down
+        }
+        if (overlay) overlay.style.display = 'none'; // Turn the lights back on!
     }
 };
 
@@ -81,19 +95,44 @@ window.addEventListener('click', function(event) {
     const profileContainer = event.target.closest('.user-profile-container');
     const dropdown = document.getElementById('profileDropdown');
     const arrow = document.querySelector('.dropdown-arrow');
+    const header = document.querySelector('.concept-header');
+
+    // Dynamically inject the dark overlay if it doesn't exist yet
+    let overlay = document.getElementById('profileOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'profileOverlay';
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.5); z-index: 1040; display: none; transition: opacity 0.3s ease;';
+        document.body.appendChild(overlay);
+    }
 
     if (!dropdown) return;
 
     if (profileContainer) {
+        // Prevent clicking INSIDE the dropdown from accidentally closing it!
         if (event.target.closest('.profile-dropdown')) return;
 
+        // Toggle dropdown
         if (dropdown.classList.contains('show')) {
             window.forceCloseDropdown();
         } else {
+            // THE FIX: Pull the ENTIRE HEADER out of the shadows!
+            if (header) {
+                header.style.position = 'relative';
+                header.style.zIndex = '1050';
+            }
+            profileContainer.style.position = 'relative';
+            profileContainer.style.zIndex = '1051';
+            dropdown.style.zIndex = '1052'; 
+
             dropdown.classList.add('show');
             if (arrow) arrow.classList.add('open');
+            profileContainer.classList.add('active');
+            
+            overlay.style.display = 'block'; // Turn off the lights!
         }
     } else {
+        // Clicked the dark background -> Close everything!
         window.forceCloseDropdown();
     }
 });
@@ -344,14 +383,25 @@ if (typeof $ !== 'undefined') {
                 await loadDashboardData();
             } 
             else if ($('#purchaseTable').length) {
-                $('#purchaseTable').DataTable({
+                const prTable = $('#purchaseTable').DataTable({
                     "scrollX": true, "order": [[1, "desc"]], "autoWidth": false,
+                    "buttons": [
+                        { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', exportOptions: { columns: ':visible' } },
+                        { extend: 'pdfHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-pdf text-danger"></i>', titleAttr: 'Export to PDF', exportOptions: { columns: ':visible' } },
+                        { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', exportOptions: { columns: ':visible' } }
+                    ],
                     "columnDefs": [
                         { "width": "20%", "targets": 0, "className": "text-center"},
                         { "width": "20%", "targets": 1, "className": "text-center"},
                         { "width": "60%", "targets": 2, "className": "text-start" }
                     ]
                 });
+                
+                const prHeader = $('#purchaseTable').closest('.modern-card').find('.btn-add-modern').parent();
+                prHeader.addClass('d-flex gap-2 align-items-center');
+                if ($('#exportPr').length === 0) prHeader.prepend('<div id="exportPr" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>');
+                prTable.buttons().container().appendTo('#exportPr');
+
                 await loadPurchaseRequests();
 
                 bindRowSelection('purchaseBody', 'btnEditAction', 'btnDeleteAction', (cells) => {
@@ -360,8 +410,13 @@ if (typeof $ !== 'undefined') {
                 });
             } 
             else if ($('#itemTable').length) {
-                $('#itemTable').DataTable({
+                const itemTable = $('#itemTable').DataTable({
                     "scrollX": true, "order": [[3, "desc"]], "autoWidth": false,
+                    "buttons": [
+                        { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', exportOptions: { columns: ':visible' } },
+                        { extend: 'pdfHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-pdf text-danger"></i>', titleAttr: 'Export to PDF', exportOptions: { columns: ':visible' } },
+                        { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', exportOptions: { columns: ':visible' } }
+                    ],
                     "columnDefs": [
                         { "width": "12%", "targets": 0, "className": "text-center" },
                         { "width": "25%", "targets": 1, "className": "text-start" },
@@ -370,6 +425,12 @@ if (typeof $ !== 'undefined') {
                         { "width": "39%", "targets": 4, "className": "text-start" }
                     ]
                 });
+
+                const itemHeader = $('#itemTable').closest('.modern-card').find('.btn-add-modern').parent();
+                itemHeader.addClass('d-flex gap-2 align-items-center');
+                if ($('#exportItem').length === 0) itemHeader.prepend('<div id="exportItem" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>');
+                itemTable.buttons().container().appendTo('#exportItem');
+
                 await loadInventoryItems();
 
                 bindRowSelection('itemBody', 'btnEditItemAction', 'btnDeleteItemAction', (cells) => {
@@ -378,8 +439,13 @@ if (typeof $ !== 'undefined') {
                 });
             } 
             else if ($('#monitorTable').length) {
-                $('#monitorTable').DataTable({
+                const monTable = $('#monitorTable').DataTable({
                     "scrollX": true, "order": [[6, "desc"]], "autoWidth": false,
+                    "buttons": [
+                        { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', exportOptions: { columns: ':visible' } },
+                        { extend: 'pdfHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-pdf text-danger"></i>', titleAttr: 'Export to PDF', exportOptions: { columns: ':visible' } },
+                        { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', exportOptions: { columns: ':visible' } }
+                    ],
                     "columnDefs": [
                         { "width": "8%", "targets": 0, "className": "text-center" },
                         { "width": "14%", "targets": 1, "className": "text-center" },
@@ -390,6 +456,12 @@ if (typeof $ !== 'undefined') {
                         { "width": "14%", "targets": 6, "className": "text-center" }
                     ]
                 });
+
+                const monHeader = $('#monitorTable').closest('.modern-card').find('.btn-add-modern').parent();
+                monHeader.addClass('d-flex gap-2 align-items-center');
+                if ($('#exportMon').length === 0) monHeader.prepend('<div id="exportMon" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>');
+                monTable.buttons().container().appendTo('#exportMon');
+
                 await loadStatusRecords();
 
                 bindRowSelection('monitorBody', 'btnEditMonAction', 'btnDeleteMonAction', (cells) => {
@@ -424,10 +496,9 @@ if (typeof $ !== 'undefined') {
 
         applyRoleBasedAccess();
 
-        document.body.classList.add('page-loaded');
+        document.body.classList.add('page-loaded'); 
     });
 }
-
 /* ============================================================== */
 /* 6. MODULE: PURCHASE REQUESTS                                   */
 /* ============================================================== */
@@ -1376,11 +1447,20 @@ async function loadAdminData() {
             `;
         });
 
-        $('#usersTable').DataTable({ 
-            "pageLength": 10, 
-            "lengthChange": false,
-            "autoWidth": false
+        const usrTable = $('#usersTable').DataTable({ 
+            "pageLength": 10,
+            "autoWidth": false,
+            "buttons": [
+                { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', exportOptions: { columns: ':visible' } },
+                { extend: 'pdfHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-pdf text-danger"></i>', titleAttr: 'Export to PDF', exportOptions: { columns: ':visible' } },
+                { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', exportOptions: { columns: ':visible' } }
+            ]
         });
+
+        const usrHeader = $('#usersTable').closest('.modern-card').find('.btn-add-modern').parent();
+        usrHeader.addClass('d-flex gap-2 align-items-center');
+        if ($('#exportUsr').length === 0) usrHeader.prepend('<div id="exportUsr" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>');
+        usrTable.buttons().container().appendTo('#exportUsr');
 
         // 4. Populate Audit Logs HTML
         const logTbody = document.getElementById('logsTableBody');

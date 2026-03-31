@@ -584,10 +584,10 @@ body.dashboard-body.page-loaded {
     transition: background-color 0.2s;
 }
 
-.user-profile-container:hover {
-    background-color: rgba(0,0,0,0.35);
+.user-profile-container:hover,
+.user-profile-container.active {
+    background-color: rgba(0, 0, 0, 0.35) !important; 
 }
-
 .header-username {
     font-size: 18px;
     font-weight: bold;
@@ -1314,4 +1314,30 @@ html:not(.dark-mode) .sidebar .nav-item.active i {
 .close-btn-mobile:hover {
     transform: rotate(90deg);
     color: #ef4444;
+}
+
+/* ============================================================== */
+/* DATATABLES EXPORT BUTTONS STYLING (Card Header Mode)           */
+/* ============================================================== */
+div.dt-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+div.dt-buttons .btn {
+    border-radius: 6px !important;
+    padding: 4px 10px; 
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+div.dt-buttons .btn:hover {
+    transform: translateY(-1px);
+}
+
+.dataTables_length, .dataTables_filter {
+    margin-bottom: 0 !important;
+}
+
+.dark-mode .dataTables_length label {
+    color: #cbd5e1 !important;
 }
