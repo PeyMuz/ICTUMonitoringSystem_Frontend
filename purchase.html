@@ -26,7 +26,7 @@
         <div class="header-right">
             <div class="user-profile-container" onclick="toggleProfileDropdown()">
                 <i class="fa-solid fa-circle-user profile-icon"></i>
-                <span id="displayHeaderName" class="header-username">[Username Here]</span>
+                <span id="displayHeaderName" class="header-username">[Username]</span>
                 <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
 
                 <div id="profileDropdown" class="profile-dropdown">
@@ -45,14 +45,13 @@
                     </div>
                 </div>
             </div>
-
             <i class="fa-solid fa-expand fullscreen-icon" onclick="toggleFullscreen()"></i>
         </div>
     </header>
 
     <nav id="sidebar" class="sidebar concept-sidebar">
         <div class="sidebar-logo-box">
-            <img src="Deeep.png" alt="DepEd Logo" class="sidebar-brand-logo">
+            <img src="Deeep.png" alt="DepEd Logo" class="sidebar-brand-logo" onerror="this.style.display='none'">
             <div class="close-btn-mobile" onclick="toggleSidebar()">
                 <i class="fa-solid fa-xmark"></i>
             </div>
@@ -83,8 +82,8 @@
         </a>
 
         <a href="admin.html" class="nav-item admin-only-link">
-            <i class="fa-solid fa-shield-halved"></i>
-            <span class="nav-text admin-only-link">Control Center</span>
+            <i class="fa-solid fa-shield-halved nav-icon"></i>
+            <span class="nav-text">Control Center</span>
         </a>
 
         <div class="sidebar-spacer"></div>
