@@ -16,6 +16,7 @@
     <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <header class="concept-header">
+        
         <div class="header-left">
             <div class="hamburger-modern" onclick="toggleSidebar()">
                 <i class="fa-solid fa-bars"></i>
@@ -24,6 +25,16 @@
         </div>
 
         <div class="header-right">
+            <div class="notification-container" onclick="toggleNotificationDropdown(event)">
+                <i class="fa-solid fa-bell notification-icon"></i>
+                <span class="notification-badge" id="notifBadge">0</span>
+                <div id="notificationDropdown" class="notification-dropdown" onclick="event.stopPropagation()">
+                    <div class="notif-header">Recent Activity</div>
+                    <div class="notif-body" id="notifBody">
+                        </div>
+                </div>
+            </div>
+            
             <div class="user-profile-container" onclick="toggleProfileDropdown()">
                 <i class="fa-solid fa-circle-user profile-icon"></i>
                 <span id="displayHeaderName" class="header-username">[Username]</span>

@@ -104,6 +104,11 @@ window.forceCloseDropdown = function() {
         if (header) header.style.zIndex = '';
         if (overlay) overlay.style.display = 'none';
     }
+
+    const notifDropdown = document.getElementById('notificationDropdown');
+    if (notifDropdown && notifDropdown.classList.contains('show')) {
+        notifDropdown.classList.remove('show');
+    }
 };
 
 window.addEventListener('click', function(event) {
@@ -123,11 +128,13 @@ window.addEventListener('click', function(event) {
     if (!dropdown) return;
 
     if (profileContainer) {
-        if (event.target.closest('.profile-dropdown')) return; // Don't close if clicking inside menu
+        if (event.target.closest('.profile-dropdown')) return;
 
         if (dropdown.classList.contains('show')) {
             window.forceCloseDropdown();
         } else {
+            window.forceCloseDropdown(); 
+            
             if (header) { header.style.position = 'relative'; header.style.zIndex = '1050'; }
             profileContainer.style.position = 'relative';
             profileContainer.style.zIndex = '1051';
@@ -168,6 +175,64 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// --- Notification Center Logic ---
+window.toggleNotificationDropdown = function(event) {
+    event.stopPropagation();
+    const drop = document.getElementById('notificationDropdown');
+    const badge = document.getElementById('notifBadge');
+    
+    if (drop.classList.contains('show')) {
+        drop.classList.remove('show');
+    } else {
+        window.forceCloseDropdown();
+        drop.classList.add('show');
+        
+        // THE FIX: Clear the unread count in storage when the user opens the menu
+        if (badge) { 
+            badge.style.display = 'none'; 
+            badge.innerText = '0'; 
+            sessionStorage.setItem('unreadNotifs', '0');
+        }
+    }
+};
+
+function updateNotificationUI() {
+    const history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+    const unreadCount = parseInt(sessionStorage.getItem('unreadNotifs')) || 0;
+    const notifBody = document.getElementById('notifBody');
+    const badge = document.getElementById('notifBadge');
+
+    if (!notifBody) return;
+    notifBody.innerHTML = '';
+
+    if (history.length === 0) {
+        notifBody.innerHTML = '<div class="notif-empty">No recent activity during this session.</div>';
+    } else {
+        history.forEach(n => {
+            const timeString = new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            notifBody.innerHTML += `
+                <div class="notif-item">
+                    <i class="fa-solid ${n.icon}" style="color: ${n.iconColor}; font-size: 16px; margin-top: 2px;"></i>
+                    <div>
+                        <strong>${n.type === 'delete' ? 'Deleted' : 'Action'}:</strong> ${n.message}
+                        <span class="notif-time">${timeString}</span>
+                    </div>
+                </div>`;
+        });
+    }
+
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.innerText = unreadCount;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+            badge.innerText = '0';
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', updateNotificationUI);
+
 // --- Theme Engine ---
 function toggleTheme() {
     document.documentElement.classList.toggle('dark-mode');
@@ -205,6 +270,22 @@ function showNotification(message, type = 'success') {
 
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
+
+    // Save to Notification Center
+    if (type !== 'error') {
+        let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+        history.unshift({ message, type, icon, iconColor, time: new Date().toISOString() });
+        if (history.length > 10) history.pop();
+        sessionStorage.setItem('notifHistory', JSON.stringify(history));
+        
+        const drop = document.getElementById('notificationDropdown');
+        if (!drop || !drop.classList.contains('show')) {
+            let unread = parseInt(sessionStorage.getItem('unreadNotifs')) || 0;
+            sessionStorage.setItem('unreadNotifs', unread + 1);
+        }
+
+        if (typeof updateNotificationUI === 'function') updateNotificationUI();
+    }
 }
 
 // --- Formatter ---
@@ -457,12 +538,29 @@ if (typeof $ !== 'undefined') {
             else if ($('#itemTable').length) {
                 $('#itemTable').DataTable({
                     "scrollX": true, "order": [[3, "desc"]], "autoWidth": false, "buttons": getExportButtons(),
-                    "columnDefs": [{ "width": "12%", "targets": [0,2,3], "className": "text-center" }, { "width": "25%", "targets": 1, "className": "text-start" }, { "width": "39%", "targets": 4, "className": "text-start" }]
+                    "columnDefs": [{ "width": "12%", "targets": [0,2,3], "className": "text-center" }, { "width": "25%", "targets": 1, "className": "text-start" }, { "width": "39%", "targets": 4, "className": "text-start" }],
+                    "initComplete": function () {
+                        this.api().columns(2).every(function () {
+                            let column = this;
+                            let select = document.createElement('select');
+                            select.className = 'form-select form-select-sm d-inline-block ms-3 w-auto';
+                            select.style.cursor = 'pointer';
+                            select.add(new Option('All Statuses', ''));
+                            ['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'].forEach(status => {
+                                select.add(new Option(status, status));
+                            });
+                            $('.dataTables_filter').append(select);
+                            select.addEventListener('change', function () {
+                                let val = $.fn.dataTable.util.escapeRegex(select.value);
+                                column.search(val ? val : '', false, false).draw();
+                            });
+                        });
+                    }
                 });
                 injectExportButtons('itemTable', 'exportItem');
                 await loadInventoryItems();
                 bindRowSelection('itemBody', 'btnEditItemAction', 'btnDeleteItemAction', (cells) => { selectedItemData = cells ? { serial: cells[0].innerText, name: cells[1].innerText, status: cells[2].innerText, date: cells[3].innerText, remarks: cells[4].innerText } : null; });
-            } 
+            }
             else if ($('#monitorTable').length) {
                 $('#monitorTable').DataTable({
                     "scrollX": true, "order": [[6, "desc"]], "autoWidth": false, "buttons": getExportButtons(),
@@ -520,7 +618,7 @@ document.addEventListener('keydown', function(event) {
     const isTyping = activeTag === 'input' || activeTag === 'textarea';
     const isModalOpen = document.body.classList.contains('modal-open');
     const isSidebarOpen = document.getElementById('sidebar') && document.getElementById('sidebar').classList.contains('active');
-    const collapseDropdown = () => { const d = document.getElementById('profileDropdown'); if (d && d.classList.contains('show')) window.forceCloseDropdown(); };
+    const collapseDropdown = () => { window.forceCloseDropdown(); };
 
     if (event.key === 'Escape') {
         const resetModal = document.getElementById('resetPassModal');
