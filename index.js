@@ -214,6 +214,71 @@ function formatLongText(text) {
     return `<span title="${safeText}" style="cursor: help; border-bottom: 1px dashed #9ca3af;">${text}</span>`;
 }
 
+// --- Idle Timeout & Auto-Logout ---
+let idleTime = 0;
+let idleInterval = null;
+let countdownInterval = null;
+let countdownValue = 60;
+const MAX_IDLE_MINUTES = 15;
+
+function initIdleTimeout() {
+    if (window.location.pathname.includes('log.html') || document.body.classList.contains('login-body')) return;
+
+    const resetIdle = () => {
+        const timeoutModal = document.getElementById('timeoutModal');
+        if (timeoutModal && timeoutModal.classList.contains('show')) return; 
+        idleTime = 0;
+    };
+
+    ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => document.addEventListener(evt, resetIdle));
+
+    idleInterval = setInterval(() => {
+        idleTime++;
+        if (idleTime >= MAX_IDLE_MINUTES) {
+            showTimeoutWarning();
+        }
+    }, 60000); 
+}
+
+function showTimeoutWarning() {
+    if (!document.getElementById('timeoutModal')) {
+        const modalHTML = `
+        <div class="modal fade" id="timeoutModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" style="z-index: 1060;">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 shadow-lg text-center p-4" style="border-radius: 16px;">
+                    <i class="fa-solid fa-user-clock mb-3" style="font-size: 3.5rem; color: #f59e0b;"></i>
+                    <h4 class="fw-bold" style="color: #1e293b;">Are you still there?</h4>
+                    <p class="text-muted mb-4" style="font-size: 14px;">For your security, you will be logged out automatically in <br><strong id="timeoutCountdown" class="fs-1" style="color: #ef4444;">60</strong> seconds.</p>
+                    <button class="btn btn-primary w-100 fw-bold py-2" onclick="stayLoggedIn()" style="border-radius: 8px;">I'm still here</button>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    countdownValue = 60;
+    document.getElementById('timeoutCountdown').innerText = countdownValue;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('timeoutModal')).show();
+
+    countdownInterval = setInterval(() => {
+        countdownValue--;
+        document.getElementById('timeoutCountdown').innerText = countdownValue;
+        if (countdownValue <= 0) {
+            clearInterval(countdownInterval);
+            bootstrap.Modal.getInstance(document.getElementById('timeoutModal')).hide();
+            logout();
+        }
+    }, 1000);
+}
+
+window.stayLoggedIn = function() {
+    clearInterval(countdownInterval);
+    idleTime = 0;
+    bootstrap.Modal.getInstance(document.getElementById('timeoutModal')).hide();
+};
+
+document.addEventListener('DOMContentLoaded', initIdleTimeout);
+
 /* ============================================================== */
 /* 4. AUTHENTICATION & RBAC                                       */
 /* ============================================================== */
