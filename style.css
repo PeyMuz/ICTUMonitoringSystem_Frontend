@@ -505,3 +505,26 @@ html.dark-mode .theme-toggle-login {
 html.dark-mode .theme-toggle-login:hover { 
     background: rgba(255,255,255,0.2) !important; 
 }
+
+/* ============================================================== */
+/* 10. PASSWORD VISIBILITY                                        */
+/* ============================================================== */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: #64748b;
+    transition: color 0.2s ease;
+    z-index: 10;
+    display: none;
+}
+
+.password-toggle-icon:hover { color: #114a91; }
+.dark-mode .password-toggle-icon { color: #94a3b8; }
+.dark-mode .password-toggle-icon:hover { color: #38bdf8; }

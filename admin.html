@@ -161,7 +161,10 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Password:</label>
-                                <input type="password" class="form-control" id="modUserPassword" placeholder="Minimum 6 chars">
+                                <div class="password-wrapper">
+                                    <input type="password" class="form-control" id="modUserPassword" placeholder="Minimum 6 chars">
+                                    <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('modUserPassword', this)"></i>
+                                </div>
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Full Name:</label>
@@ -247,7 +250,10 @@
                     </div>
                     <div class="modal-body p-4">
                         <label class="form-label fw-bold">New Temporary Password:</label>
-                        <input type="password" class="form-control" id="newTempPassword" placeholder="Minimum 6 chars">
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" id="newTempPassword" placeholder="Minimum 6 chars">
+                            <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('newTempPassword', this)"></i>
+                        </div>
                     </div>
                     <div class="modal-footer justify-content-center border-top-0 pt-0">
                         <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>

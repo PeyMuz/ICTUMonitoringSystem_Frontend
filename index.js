@@ -143,6 +143,31 @@ window.addEventListener('click', function(event) {
     }
 });
 
+// --- Password Visibility Toggle ---
+window.togglePassword = function(inputId, iconElement) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        iconElement.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = "password";
+        iconElement.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+};
+
+// --- Auto Show/Hide Eye Icon on Typing ---
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.password-wrapper input').forEach(input => {
+        const icon = input.nextElementSibling; 
+        if (icon && icon.classList.contains('password-toggle-icon')) {
+            icon.style.display = input.value.length > 0 ? 'block' : 'none';
+            input.addEventListener('input', function() {
+                icon.style.display = this.value.length > 0 ? 'block' : 'none';
+            });
+        }
+    });
+});
+
 // --- Theme Engine ---
 function toggleTheme() {
     document.documentElement.classList.toggle('dark-mode');

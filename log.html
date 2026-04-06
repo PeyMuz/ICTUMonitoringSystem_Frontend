@@ -33,7 +33,10 @@
 
                 <div class="input-group">
                     <label>Password</label>
-                    <input type="password" id="loginPass" placeholder="Enter your password..." onkeydown="if(event.key === 'Enter') login()">
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPass" placeholder="Enter your password..." onkeydown="if(event.key === 'Enter') login()">
+                        <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('loginPass', this)"></i>
+                    </div>                
                 </div>
 
                 <button class="btn-login" onclick="login()">Log In</button>
