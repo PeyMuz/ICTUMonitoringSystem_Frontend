@@ -348,6 +348,21 @@ function bindRowSelection(tbodyId, editBtnId, deleteBtnId, extractDataCallback) 
         extractDataCallback(targetRow.querySelectorAll('td'));
     });
 
+    tbody.addEventListener('dblclick', function(e) {
+        const targetRow = e.target.closest('tr');
+        if (!targetRow) return;
+        
+        tbody.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
+        targetRow.classList.add('table-active');
+        if (btnEdit) btnEdit.disabled = false;
+        if (btnDelete) btnDelete.disabled = false;
+        extractDataCallback(targetRow.querySelectorAll('td'));
+
+        if (btnEdit && window.getComputedStyle(btnEdit).display !== 'none') {
+            btnEdit.click();
+        }
+    });
+
     document.addEventListener('click', function(e) {
         if (tbody.contains(e.target) || (btnEdit && btnEdit.contains(e.target)) || (btnDelete && btnDelete.contains(e.target)) || e.target.closest('.modal')) return;
         tbody.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
@@ -451,8 +466,11 @@ document.addEventListener('keydown', function(event) {
         collapseDropdown(); toggleSidebar(); return;
     }
 
+    const role = localStorage.getItem('activeUser') ? JSON.parse(localStorage.getItem('activeUser')).position : 'Guest';
+    
+    const hasCrudAccess = !['Employee', 'Staff', 'Guest'].includes(role); 
+
     if (!isTyping && !isModalOpen) {
-        const role = localStorage.getItem('activeUser') ? JSON.parse(localStorage.getItem('activeUser')).position : 'Guest';
         if (['1','2','3','4','5','0'].includes(event.key)) collapseDropdown(); 
         if (event.key === '1') { window.location.href = 'inside.html'; return; }
         if (role !== 'Guest') {
@@ -466,7 +484,7 @@ document.addEventListener('keydown', function(event) {
 
     if (isTyping || isSidebarOpen) return; 
 
-    if (event.key === '+') {
+    if (event.key === '+' && hasCrudAccess) {
         event.preventDefault(); collapseDropdown();
         if (document.getElementById('purchaseTable')) openModal('add');
         if (document.getElementById('itemTable')) openItemModal('add');
@@ -475,7 +493,7 @@ document.addEventListener('keydown', function(event) {
         return;
     }
 
-    if (event.key === 'Enter' && !isModalOpen) {
+    if (event.key === 'Enter' && !isModalOpen && hasCrudAccess) {
         collapseDropdown();
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('edit'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('edit'); }
@@ -484,7 +502,7 @@ document.addEventListener('keydown', function(event) {
         return;
     }
 
-    if ((event.key === 'Backspace' || event.key === 'Delete') && !isModalOpen) {
+    if ((event.key === 'Backspace' || event.key === 'Delete') && !isModalOpen && hasCrudAccess) {
         collapseDropdown();
         if (selectedPRData && document.getElementById('purchaseTable')) { event.preventDefault(); openModal('delete'); }
         if (selectedItemData && document.getElementById('itemTable')) { event.preventDefault(); openItemModal('delete'); }
