@@ -528,3 +528,53 @@ html.dark-mode .theme-toggle-login:hover {
 .password-toggle-icon:hover { color: #114a91; }
 .dark-mode .password-toggle-icon { color: #94a3b8; }
 .dark-mode .password-toggle-icon:hover { color: #38bdf8; }
+
+/* ============================================================== */
+/* 11. RESPONSIVE DESIGN (MOBILE OPTIMIZATION)                    */
+/* ============================================================== */
+@media (max-width: 992px) {
+    .login-wrapper { flex-direction: column; }
+    .login-left { padding: 3rem; flex: none; height: auto; min-height: 30vh; }
+    .login-right { flex: 1; align-items: flex-start; padding-top: 2rem; }
+    
+    .theme-toggle-login {
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    .theme-toggle-login:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    main.data-table-main { height: auto !important; overflow: visible !important; }
+    .h-100 { height: auto !important; }
+    
+    .modern-card { min-height: 450px; }
+    
+    .dashboard-stat-card { min-height: auto !important; }
+}
+
+@media (max-width: 768px) {
+    main.data-table-main { padding: 10px !important; }
+    .modern-card { padding: 15px !important; }
+    
+    .modern-card-header { flex-direction: column; align-items: flex-start !important; gap: 1rem; }
+    .card-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-modern { flex: 1; justify-content: center; }
+    
+    .dataTables_wrapper .row { flex-direction: column; gap: 10px; }
+    .dataTables_wrapper .col-md-6 { width: 100%; text-align: left !important; }
+    .dataTables_filter { text-align: left !important; }
+    .dataTables_filter input { width: 100%; margin-left: 0 !important; margin-top: 5px; }
+    
+    .row.gx-2.mb-2 { display: flex; flex-wrap: wrap; }
+    .row.gx-2.mb-2 > .col-md-3 { width: 50%; padding: 0 5px; }
+    .dashboard-stat-card { padding: 12px !important; margin-bottom: 10px; height: calc(100% - 10px); }
+    .stat-label { font-size: 9px; letter-spacing: 0; }
+    .stat-number { font-size: 22px; }
+    .stat-icon { font-size: 24px; }
+    
+    .dashboard-welcome-banner { flex-direction: column; text-align: center; gap: 10px; min-height: auto !important; }
+    
+    .profile-dropdown { position: fixed; top: 70px; left: 10px; right: 10px; width: auto; }
+}
