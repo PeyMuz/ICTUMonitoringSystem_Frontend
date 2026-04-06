@@ -378,7 +378,8 @@ if (typeof $ !== 'undefined') {
         try {
             if (document.getElementById('dashTotalWorking')) {
                 await loadDashboardData();
-            } 
+                setInterval(loadDashboardData, 30000);
+            }
             else if ($('#purchaseTable').length) {
                 $('#purchaseTable').DataTable({
                     "scrollX": true, "order": [[1, "desc"]], "autoWidth": false, "buttons": getExportButtons(),
@@ -408,6 +409,7 @@ if (typeof $ !== 'undefined') {
             }
             else if ($('#usersTable').length) {
                 await loadAdminData(); 
+                setInterval(refreshAuditLogs, 10000); 
                 bindRowSelection('usersTableBody', 'btnEditUserAction', 'btnDeleteUserAction', (cells) => { 
                     if (cells) { const divSec = cells[3].innerText.split(' / '); selectedUserData = { username: cells[0].innerText, fullName: cells[1].innerText, role: cells[2].innerText, division: divSec[0].trim(), section: divSec[1] ? divSec[1].trim() : '' }; } 
                     else selectedUserData = null; 
@@ -531,6 +533,7 @@ function animateValue(id, start, end, duration) {
 }
 
 let dashGlobalItems = [];
+let statusChartInstance = null; 
 
 async function loadDashboardData() {
     const dateElement = document.getElementById('dashCurrentDate');
@@ -549,24 +552,35 @@ async function loadDashboardData() {
             else if (i.itemStatus === 'Returned') counts.returned++;
         });
 
-        animateValue('dashTotalWorking', 0, counts.working, 1200);
-        animateValue('dashTotalRepair', 0, counts.repair, 1200);
-        animateValue('dashTotalMissing', 0, counts.missing, 1200);
-        animateValue('dashTotalPRs', 0, prs.length, 1200);
+        if(statusChartInstance) {
+            document.getElementById('dashTotalWorking').innerText = counts.working;
+            document.getElementById('dashTotalRepair').innerText = counts.repair;
+            document.getElementById('dashTotalMissing').innerText = counts.missing;
+            document.getElementById('dashTotalPRs').innerText = prs.length;
+        } else {
+            animateValue('dashTotalWorking', 0, counts.working, 1200);
+            animateValue('dashTotalRepair', 0, counts.repair, 1200);
+            animateValue('dashTotalMissing', 0, counts.missing, 1200);
+            animateValue('dashTotalPRs', 0, prs.length, 1200);
+        }
 
-        new Chart(document.getElementById('statusChart').getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'],
-                datasets: [{ data: [counts.working, counts.repair, counts.missing, counts.condemned, counts.returned], backgroundColor: ['#198754', '#fd7e14', '#dc3545', '#343a40', '#0dcaf0'], borderWidth: 0, hoverOffset: 4 }]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } },
-                onClick: (event, elements) => { if (elements.length > 0) openStatusModal(['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'][elements[0].index]); }
-            }
-        });
+        if (statusChartInstance) {
+            statusChartInstance.data.datasets[0].data = [counts.working, counts.repair, counts.missing, counts.condemned, counts.returned];
+            statusChartInstance.update();
+        } else {
+            statusChartInstance = new Chart(document.getElementById('statusChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'],
+                    datasets: [{ data: [counts.working, counts.repair, counts.missing, counts.condemned, counts.returned], backgroundColor: ['#198754', '#fd7e14', '#dc3545', '#343a40', '#0dcaf0'], borderWidth: 0, hoverOffset: 4 }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } },
+                    onClick: (event, elements) => { if (elements.length > 0) openStatusModal(['Working', 'Under Repair', 'Missing', 'Condemned', 'Returned'][elements[0].index]); }
+                }
+            });
+        }
 
-        // Populate Feeds
         populateFeed('dashActivityFeed', statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 3), (s) => `
             <td class="fw-bold border-0" style="font-size: 13px;">${formatLongText(s.itemName)}</td>
             <td class="border-0" style="font-size: 13px;"><i class="fa-solid fa-user text-muted me-1"></i> ${s.personnelName}</td>
@@ -1042,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================== */
 async function loadAdminData() {
     try {
-        const [users, logs] = await Promise.all([ apiFetch('/Admin/users'), apiFetch('/Admin/logs') ]);
+        const users = await apiFetch('/Admin/users');
         const usrTableObj = $('#usersTable').DataTable();
         
         usrTableObj.clear();
@@ -1055,10 +1069,19 @@ async function loadAdminData() {
         });
         usrTableObj.draw(false);
         
-        // Avoid duplicate button injection if loadAdminData is called multiple times (e.g. after save)
         if ($('#exportUsr').length === 0) injectExportButtons('usersTable', 'exportUsr');
 
+        await refreshAuditLogs();
+
+    } catch (error) { console.error("Admin Load Error:", error); showNotification("Failed to load secure admin data.", "error"); }
+}
+
+async function refreshAuditLogs() {
+    try {
+        const logs = await apiFetch('/Admin/logs');
         const logTbody = document.getElementById('logsTableBody');
+        if (!logTbody) return;
+
         logTbody.innerHTML = '';
         logs.forEach(l => {
             let actionColor = '#94a3b8';
@@ -1067,7 +1090,8 @@ async function loadAdminData() {
             if (l.actionType.includes('DELETE')) actionColor = '#f87171'; 
             logTbody.innerHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="width: 25%; color: #64748b;">[${new Date(l.timestamp).toLocaleString()}]</td><td style="width: 15%; color: #38bdf8; font-weight: bold;">${l.username}</td><td style="width: 15%; color: ${actionColor};">${l.actionType}</td><td style="width: 45%;">${l.description}</td></tr>`;
         });
-    } catch (error) { console.error("Admin Load Error:", error); showNotification("Failed to load secure admin data.", "error"); }
+    } catch (error) { 
+    }
 }
 
 function openUserModal(actionType) {
