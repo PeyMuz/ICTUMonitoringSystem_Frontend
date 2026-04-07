@@ -360,6 +360,102 @@ window.stayLoggedIn = function() {
 
 document.addEventListener('DOMContentLoaded', initIdleTimeout);
 
+// --- Bulk CSV Import Engine ---
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.Papa) {
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js";
+        document.head.appendChild(script);
+    }
+});
+
+window.processImport = function(event, type) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = ''; 
+
+    Papa.parse(file, {
+        skipEmptyLines: true,
+        complete: async function(results) {
+            let rawData = results.data;
+            if (rawData.length === 0) { showNotification("CSV file is empty.", "error"); return; }
+
+            let headerIndex = 0;
+            for (let i = 0; i < Math.min(5, rawData.length); i++) {
+                const rowText = rawData[i].join('').toLowerCase();
+                if (rowText.includes('purchase number') || rowText.includes('serial') || rowText.includes('pr num') || rowText.includes('item name')) {
+                    headerIndex = i; break;
+                }
+            }
+
+            const headers = rawData[headerIndex].map(h => h.replace(/^\uFEFF/, '').trim());
+            const dataRows = rawData.slice(headerIndex + 1);
+
+            const getVal = (row, ...possibleHeaders) => {
+                for (let ph of possibleHeaders) {
+                    const idx = headers.findIndex(h => h.toLowerCase() === ph.toLowerCase());
+                    if (idx !== -1 && row[idx]) return row[idx].trim();
+                }
+                return '';
+            };
+
+            const parseApiDate = (dateStr) => {
+                if (!dateStr) return new Date().toISOString();
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+            };
+
+            showNotification(`Importing ${dataRows.length} records... Please wait.`, 'success');
+            let successCount = 0; let errorCount = 0;
+
+            for (const row of dataRows) {
+                try {
+                    if (type === 'purchase') {
+                        const prNumRaw = getVal(row, 'prNum', 'Purchase Number', 'PR Number');
+                        const prNum = parseInt(prNumRaw, 10);
+                        const prDesc = getVal(row, 'prDescription', 'Description');
+                        
+                        if (isNaN(prNum) && !prDesc) continue; // Skip totally blank rows
+
+                        await apiFetch('/PurchaseRequests', 'POST', {
+                            prNum: isNaN(prNum) ? 0 : prNum,
+                            prDate: parseApiDate(getVal(row, 'prDate', 'Date')),
+                            prDescription: prDesc || ''
+                        });
+                    } else if (type === 'item') {
+                        const serial = getVal(row, 'itemSerial', 'Serial Number', 'Serial');
+                        if (!serial) continue;
+                        
+                        await apiFetch(`/Inventory/${serial}`, 'POST', {
+                            itemName: getVal(row, 'itemName', 'Item Name') || '',
+                            itemStatus: getVal(row, 'itemStatus', 'Status') || 'Working',
+                            dateChecked: parseApiDate(getVal(row, 'dateChecked', 'Date Checked', 'Date')),
+                            remarks: getVal(row, 'remarks', 'Remarks') || ''
+                        });
+                    } else if (type === 'monitor') {
+                        const serial = getVal(row, 'itemSerial', 'Item Serial', 'Serial');
+                        if (!serial) continue;
+
+                        await apiFetch(`/ItemStatus/${serial}`, 'POST', {
+                            personnelName: getVal(row, 'personnelName', 'Personnel Name', 'Assigned To') || '',
+                            division: getVal(row, 'division', 'Division') || 'NCR',
+                            section: getVal(row, 'section', 'Section') || 'ICTU',
+                            dateAwarded: parseApiDate(getVal(row, 'dateAwarded', 'Date Awarded', 'Date'))
+                        });
+                    }
+                    successCount++;
+                } catch (e) { errorCount++; console.error(`Row import failed:`, row, e); }
+            }
+
+            showNotification(`Import Complete: ${successCount} added, ${errorCount} failed.`, successCount > 0 ? 'success' : 'error');
+            
+            if (type === 'purchase') loadPurchaseRequests();
+            else if (type === 'item') loadInventoryItems();
+            else if (type === 'monitor') loadStatusRecords();
+        }
+    });
+};
+
 /* ============================================================== */
 /* 4. AUTHENTICATION & RBAC                                       */
 /* ============================================================== */
@@ -465,16 +561,30 @@ function applyRoleBasedAccess() {
 /* ============================================================== */
 function getExportButtons() {
     return [
-        { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', exportOptions: { columns: ':visible' } },
+        { extend: 'excelHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-excel text-success"></i>', titleAttr: 'Export to Excel', title: '', exportOptions: { columns: ':visible' } },
         { extend: 'pdfHtml5', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-file-pdf text-danger"></i>', titleAttr: 'Export to PDF', exportOptions: { columns: ':visible' } },
-        { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', exportOptions: { columns: ':visible' } }
+        { extend: 'print', className: 'btn btn-sm btn-light border shadow-sm', text: '<i class="fa-solid fa-print text-dark"></i>', titleAttr: 'Print Table', title: '', exportOptions: { columns: ':visible' } }
     ];
 }
 
-function injectExportButtons(tableId, containerId) {
+function injectExportButtons(tableId, containerId, importType = null) {
     const header = $(`#${tableId}`).closest('.modern-card').find('.btn-add-modern').parent();
     header.addClass('d-flex gap-2 align-items-center');
-    if ($(`#${containerId}`).length === 0) header.prepend(`<div id="${containerId}" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>`);
+    
+    if ($(`#${containerId}`).length === 0) {
+        let html = `<div id="${containerId}" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>`;
+        
+        if (importType) {
+            html += `
+            <div class="d-flex gap-1 border-end pe-2 border-secondary-subtle">
+                <input type="file" id="importFile_${importType}" accept=".csv" style="display:none;" onchange="processImport(event, '${importType}')">
+                <button class="btn btn-sm btn-light border shadow-sm text-primary" title="Import CSV" onclick="document.getElementById('importFile_${importType}').click()">
+                    <i class="fa-solid fa-file-import"></i>
+                </button>
+            </div>`;
+        }
+        header.prepend(html);
+    }
     $(`#${tableId}`).DataTable().buttons().container().appendTo(`#${containerId}`);
 }
 
@@ -531,7 +641,7 @@ if (typeof $ !== 'undefined') {
                     "scrollX": true, "order": [[1, "desc"]], "autoWidth": false, "buttons": getExportButtons(),
                     "columnDefs": [{ "width": "20%", "targets": 0, "className": "text-center"}, { "width": "20%", "targets": 1, "className": "text-center"}, { "width": "60%", "targets": 2, "className": "text-start" }]
                 });
-                injectExportButtons('purchaseTable', 'exportPr');
+                injectExportButtons('purchaseTable', 'exportPr', 'purchase');
                 await loadPurchaseRequests();
                 bindRowSelection('purchaseBody', 'btnEditAction', 'btnDeleteAction', (cells) => { selectedPRData = cells ? { prNumber: cells[0].innerText, date: cells[1].innerText, description: cells[2].innerText } : null; });
             } 
@@ -557,7 +667,7 @@ if (typeof $ !== 'undefined') {
                         });
                     }
                 });
-                injectExportButtons('itemTable', 'exportItem');
+                injectExportButtons('itemTable', 'exportItem', 'item');
                 await loadInventoryItems();
                 bindRowSelection('itemBody', 'btnEditItemAction', 'btnDeleteItemAction', (cells) => { selectedItemData = cells ? { serial: cells[0].innerText, name: cells[1].innerText, status: cells[2].innerText, date: cells[3].innerText, remarks: cells[4].innerText } : null; });
             }
@@ -566,7 +676,7 @@ if (typeof $ !== 'undefined') {
                     "scrollX": true, "order": [[6, "desc"]], "autoWidth": false, "buttons": getExportButtons(),
                     "columnDefs": [{ "width": "8%", "targets": 0, "className": "text-center" }, { "width": "14%", "targets": [1,4,6], "className": "text-center" }, { "width": "20%", "targets": [2,3], "className": "text-start" }, { "width": "10%", "targets": 5, "className": "text-center" }]
                 });
-                injectExportButtons('monitorTable', 'exportMon');
+                injectExportButtons('monitorTable', 'exportMon', 'monitor');
                 await loadStatusRecords();
                 bindRowSelection('monitorBody', 'btnEditMonAction', 'btnDeleteMonAction', (cells) => { selectedMonData = cells ? { id: cells[0].innerText, serial: cells[1].innerText, name: cells[2].innerText, personnel: cells[3].innerText, division: cells[4].innerText, section: cells[5].innerText, date: cells[6].innerText } : null; });
             }
