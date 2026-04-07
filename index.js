@@ -187,7 +187,6 @@ window.toggleNotificationDropdown = function(event) {
         window.forceCloseDropdown();
         drop.classList.add('show');
         
-        // THE FIX: Clear the unread count in storage when the user opens the menu
         if (badge) { 
             badge.style.display = 'none'; 
             badge.innerText = '0'; 
@@ -454,6 +453,37 @@ window.processImport = function(event, type) {
             else if (type === 'monitor') loadStatusRecords();
         }
     });
+};
+
+// --- Skeleton Loader Helper ---
+window.showSkeleton = function(targetId, cols, rows = 4) {
+    // 1. If the target is a DataTables grid and library is loaded
+    if ($.fn.DataTable && $.fn.DataTable.isDataTable(`#${targetId}`)) {
+        const dt = $(`#${targetId}`).DataTable();
+        dt.clear();
+        for (let i = 0; i < rows; i++) {
+            let rowData = [];
+            for (let c = 0; c < cols; c++) {
+                rowData.push(`<div class="skeleton-line" style="width: ${40 + Math.random() * 50}%"></div>`);
+            }
+            dt.row.add(rowData);
+        }
+        dt.draw(false);
+    } 
+    // 2. If the target is a plain HTML tbody
+    else {
+        const tbody = document.getElementById(targetId);
+        if (!tbody) return;
+        let html = '';
+        for (let i = 0; i < rows; i++) {
+            html += '<tr>';
+            for (let c = 0; c < cols; c++) {
+                html += `<td class="border-0 py-3"><div class="skeleton-line" style="width: ${40 + Math.random() * 50}%"></div></td>`;
+            }
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
 };
 
 /* ============================================================== */
@@ -817,6 +847,11 @@ async function loadDashboardData() {
     if (dateElement) dateElement.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     try {
+        // Show Skeletons(Target ID, Columns, Rows)
+        showSkeleton('dashActivityFeed', 3, 3);
+        showSkeleton('dashRecentPRs', 3, 3);
+        showSkeleton('dashRecentItems', 3, 4);
+        
         const [items, prs, statuses] = await Promise.all([ apiFetch('/Inventory'), apiFetch('/PurchaseRequests'), apiFetch('/ItemStatus') ]);
         dashGlobalItems = items;
 
@@ -920,12 +955,14 @@ function openStatusModal(statusType) {
 /* ============================================================== */
 async function loadPurchaseRequests() {
     try {
+        showSkeleton('purchaseTable', 3, 5);
+
         const prs = await apiFetch('/PurchaseRequests');
         const table = $('#purchaseTable').DataTable();
         table.clear();
         prs.forEach(pr => table.row.add([pr.prNum, pr.prDate.split('T')[0], formatLongText(pr.prDescription)]));
         table.draw(false);
-    } catch (error) { showNotification("Failed to load PRs.", "error"); }
+    } catch (error) { showNotification("Failed to load Purchase Requests.", "error"); }
 }
 
 function openModal(actionType) {
@@ -1057,12 +1094,14 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================== */
 async function loadInventoryItems() {
     try {
+        showSkeleton('itemTable', 5, 5);
+
         const items = await apiFetch('/Inventory');
         const table = $('#itemTable').DataTable();
         table.clear();
         items.forEach(i => table.row.add([i.itemSerial, i.itemName, getStatusBadge(i.itemStatus), i.dateChecked.split('T')[0], formatLongText(i.remarks)]));
         table.draw(false);
-    } catch (error) { showNotification("Failed to load Items.", "error"); }
+    } catch (error) { showNotification("Failed to load Inventory Items.", "error"); }
 }
 
 function openItemModal(actionType) {
@@ -1183,12 +1222,14 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================== */
 async function loadStatusRecords() {
     try {
+        showSkeleton('monitorTable', 7, 5);
+
         const records = await apiFetch('/ItemStatus');
         const table = $('#monitorTable').DataTable();
         table.clear();
         records.forEach(r => table.row.add([r.assignedID, r.itemSerial, r.itemName, r.personnelName, r.division, r.section, r.dateAwarded.split('T')[0]]));
         table.draw(false);
-    } catch (error) { showNotification("Failed to load Statuses.", "error"); }
+    } catch (error) { showNotification("Failed to load Item Status.", "error"); }
 }
 
 function openMonModal(actionType) {
@@ -1333,6 +1374,8 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================== */
 async function loadAdminData() {
     try {
+        showSkeleton('usersTable', 4, 5);
+
         const users = await apiFetch('/Admin/users');
         const usrTableObj = $('#usersTable').DataTable();
         

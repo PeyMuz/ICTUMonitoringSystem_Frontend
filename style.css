@@ -613,3 +613,26 @@ html.dark-mode .theme-toggle-login:hover {
 .dark-mode .notif-header { background-color: #0f172a; border-color: #334155; }
 .dark-mode .notif-item { border-color: #334155; }
 .dark-mode .notif-empty { color: #64748b; }
+
+/* ============================================================== */
+/* 13. SKELETON LOADERS (SHIMMER EFFECT)                          */
+/* ============================================================== */
+.skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+    margin: 4px 0;
+}
+
+/* Dark Mode Support */
+.dark-mode .skeleton-line {
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+    background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
