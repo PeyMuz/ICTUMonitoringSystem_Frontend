@@ -254,8 +254,8 @@ function updateThemeUI(isDark) {
     if (themeText) { if (isDark) { themeText.innerText = 'Light Mode'; } else { themeText.innerText = 'Dark Mode'; } }
 }
 
-// --- Notifications ---
-function showNotification(message, type = 'success') {
+// --- Notifications & Soft Delete Engine ---
+function showNotification(message, type = 'success', undoConfig = null) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -264,25 +264,47 @@ function showNotification(message, type = 'success') {
     let icon = type === 'error' ? 'fa-circle-exclamation' : (type === 'delete' ? 'fa-trash-can' : 'fa-circle-check');
     let iconColor = type === 'error' ? '#dc3545' : (type === 'delete' ? '#ff9800' : '#28a745');
 
-    toast.innerHTML = `<i class="fa-solid ${icon}" style="color: ${iconColor}; font-size: 18px;"></i> <span>${message}</span>`;
+    let html = `<div class="d-flex align-items-center w-100"><i class="fa-solid ${icon}" style="color: ${iconColor}; font-size: 18px; margin-right: 10px;"></i> <span class="flex-grow-1">${message}</span>`;
+    if (undoConfig) html += `<button class="btn btn-sm ms-3 undo-btn" style="border-radius: 4px; font-weight: bold; font-size: 11px; letter-spacing: 0.5px;">UNDO</button>`;
+    html += `</div>`;
+    
+    toast.innerHTML = html;
     container.appendChild(toast);
-
     setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
 
-    // Save to Notification Center
-    if (type !== 'error') {
+    if (undoConfig) {
+        let isUndone = false;
+        
+        const timerId = setTimeout(async () => {
+            if (!isUndone) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+                await undoConfig.executeApiDelete();
+            }
+        }, 5000);
+
+        toast.querySelector('.undo-btn').addEventListener('click', () => {
+            isUndone = true;
+            clearTimeout(timerId);
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+            showNotification(`${undoConfig.itemName} deletion reversed!`, 'success');
+        });
+    } else {
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+
+    if (type !== 'error' && !undoConfig) {
         let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
         history.unshift({ message, type, icon, iconColor, time: new Date().toISOString() });
         if (history.length > 10) history.pop();
         sessionStorage.setItem('notifHistory', JSON.stringify(history));
-        
+
         const drop = document.getElementById('notificationDropdown');
         if (!drop || !drop.classList.contains('show')) {
             let unread = parseInt(sessionStorage.getItem('unreadNotifs')) || 0;
             sessionStorage.setItem('unreadNotifs', unread + 1);
         }
-
         if (typeof updateNotificationUI === 'function') updateNotificationUI();
     }
 }
@@ -715,7 +737,13 @@ if (typeof $ !== 'undefined') {
                 bindRowSelection('monitorBody', 'btnEditMonAction', 'btnDeleteMonAction', (cells) => { selectedMonData = cells ? { id: cells[0].innerText, serial: cells[1].innerText, name: cells[2].innerText, personnel: cells[3].innerText, division: cells[4].innerText, section: cells[5].innerText, date: cells[6].innerText } : null; });
             }
             else if ($('#usersTable').length) {
+                $('#usersTable').DataTable({
+                    "scrollX": true, "autoWidth": false, "buttons": getExportButtons()
+                });
+                injectExportButtons('usersTable', 'exportUsr');
+
                 await loadAdminData(); 
+                
                 setInterval(refreshAuditLogs, 10000); 
                 bindRowSelection('usersTableBody', 'btnEditUserAction', 'btnDeleteUserAction', (cells) => { 
                     if (cells) { const divSec = cells[3].innerText.split(' / '); selectedUserData = { username: cells[0].innerText, fullName: cells[1].innerText, role: cells[2].innerText, division: divSec[0].trim(), section: divSec[1] ? divSec[1].trim() : '' }; } 
@@ -1042,15 +1070,25 @@ async function savePurchase() {
     const pr = selectedPRData?.prNumber;
 
     if (actionType === 'delete') {
-        btnSave.textContent = "Deleting..."; btnSave.disabled = true;
-        try {
-            await apiFetch(`/PurchaseRequests/${pr}`, 'DELETE');
-            const activeRow = document.querySelector('#purchaseBody tr.table-active');
-            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Purchase Request Deleted!', 'delete'); }
-            document.getElementById('btnEditAction').disabled = true; document.getElementById('btnDeleteAction').disabled = true;
-            selectedPRData = null; closeModal(); 
-        } catch (error) { showNotification(error.message, 'error'); } 
-        finally { btnSave.textContent = originalText; btnSave.disabled = false; }
+        closeModal();
+        
+        showNotification(`Deleting Purchase Request ${pr} in 5s...`, 'delete', {
+            itemName: `Purchase Request ${pr}`, 
+            executeApiDelete: async () => {
+                try {
+                    await apiFetch(`/PurchaseRequests/${pr}`, 'DELETE');
+                    const activeRow = document.querySelector('#purchaseBody tr.table-active');
+                    if (activeRow) table.row(activeRow).remove().draw(false);
+                    document.getElementById('btnEditAction').disabled = true; document.getElementById('btnDeleteAction').disabled = true;
+                    selectedPRData = null; 
+                    
+                    let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+                    history.unshift({ message: `Deleted Purchase Request ${pr}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                    sessionStorage.setItem('notifHistory', JSON.stringify(history));
+                    if (typeof updateNotificationUI === 'function') updateNotificationUI();
+                } catch (error) { showNotification(error.message, 'error'); }
+            }
+        });
         return; 
     }
 
@@ -1158,11 +1196,27 @@ async function saveItemRecord() {
         const table = $('#itemTable').DataTable();
 
         if (actionType === 'delete') {
-            await apiFetch(`/Inventory/${inputId}`, 'DELETE');
-            const activeRow = document.querySelector('#itemBody tr.table-active');
-            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Item Record Deleted!', 'delete'); }
-            document.getElementById('btnEditItemAction').disabled = true; document.getElementById('btnDeleteItemAction').disabled = true;
-            selectedItemData = null; closeItemModal(); return;
+            closeItemModal();
+            
+            showNotification(`Deleting Item ${inputId} in 5s...`, 'delete', {
+                itemName: `Item ${inputId}`,
+                executeApiDelete: async () => {
+                    try {
+                        await apiFetch(`/Inventory/${inputId}`, 'DELETE');
+                        const activeRow = document.querySelector('#itemBody tr.table-active');
+                        if (activeRow) table.row(activeRow).remove().draw(false);
+                        document.getElementById('btnEditItemAction').disabled = true; document.getElementById('btnDeleteItemAction').disabled = true;
+                        selectedItemData = null;
+
+                        // Manually log to the Notification Bell
+                        let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+                        history.unshift({ message: `Deleted Item ${inputId}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        sessionStorage.setItem('notifHistory', JSON.stringify(history));
+                        if (typeof updateNotificationUI === 'function') updateNotificationUI();
+                    } catch (error) { showNotification(error.message, 'error'); }
+                }
+            });
+            return;
         }
 
         if (!inputId || !name || !date) { showNotification("Please fill out all required fields.", 'error'); return; }
@@ -1286,11 +1340,26 @@ async function saveMonRecord() {
         const table = $('#monitorTable').DataTable();
 
         if (actionType === 'delete') {
-            await apiFetch(`/ItemStatus/${id}`, 'DELETE');
-            const activeRow = document.querySelector('#monitorBody tr.table-active');
-            if (activeRow) { table.row(activeRow).remove().draw(false); showNotification('Status Record Deleted!', 'delete'); }
-            document.getElementById('btnEditMonAction').disabled = true; document.getElementById('btnDeleteMonAction').disabled = true;
-            selectedMonData = null; closeMonModal(); return; 
+            closeMonModal();
+            
+            showNotification(`Deleting Status ${id} in 5s...`, 'delete', {
+                itemName: `Status Record`,
+                executeApiDelete: async () => {
+                    try {
+                        await apiFetch(`/ItemStatus/${id}`, 'DELETE');
+                        const activeRow = document.querySelector('#monitorBody tr.table-active');
+                        if (activeRow) table.row(activeRow).remove().draw(false);
+                        document.getElementById('btnEditMonAction').disabled = true; document.getElementById('btnDeleteMonAction').disabled = true;
+                        selectedMonData = null;
+
+                        let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+                        history.unshift({ message: `Deleted Status for ${serial}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        sessionStorage.setItem('notifHistory', JSON.stringify(history));
+                        if (typeof updateNotificationUI === 'function') updateNotificationUI();
+                    } catch (error) { showNotification(error.message, 'error'); }
+                }
+            });
+            return; 
         }
 
         if (!serial || !personnel || !date) { showNotification("Please fill out all required fields.", 'error'); return; }
@@ -1389,8 +1458,6 @@ async function loadAdminData() {
         });
         usrTableObj.draw(false);
         
-        if ($('#exportUsr').length === 0) injectExportButtons('usersTable', 'exportUsr');
-
         await refreshAuditLogs();
 
     } catch (error) { console.error("Admin Load Error:", error); showNotification("Failed to load secure admin data.", "error"); }
@@ -1454,9 +1521,25 @@ async function saveUserRecord() {
 
     try {
         if (actionType === 'delete') {
-            await apiFetch(`/Admin/users/${username}`, 'DELETE');
-            showNotification('User Terminated Successfully!', 'delete');
-            document.getElementById('btnEditUserAction').disabled = true; document.getElementById('btnDeleteUserAction').disabled = true;
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            
+            showNotification(`Terminating User ${username} in 5s...`, 'delete', {
+                itemName: `User Account ${username}`,
+                executeApiDelete: async () => {
+                    try {
+                        await apiFetch(`/Admin/users/${username}`, 'DELETE');
+                        document.getElementById('btnEditUserAction').disabled = true; document.getElementById('btnDeleteUserAction').disabled = true;
+                        await loadAdminData();
+                    
+                        let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
+                        history.unshift({ message: `Terminated user ${username}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        sessionStorage.setItem('notifHistory', JSON.stringify(history));
+                        if (typeof updateNotificationUI === 'function') updateNotificationUI();
+                    } catch (error) { showNotification(error.message, 'error'); }
+                }
+            });
+            return;
+
         } else {
             const payload = { Username: username, Password: document.getElementById('modUserPassword').value, FullName: document.getElementById('modUserFullName').value, Role: document.getElementById('modUserRole').value, Division: document.getElementById('modUserDiv').value, Section: document.getElementById('modUserSec').value };
             if (actionType === 'add') {

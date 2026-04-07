@@ -371,6 +371,18 @@ div.dt-buttons .btn:hover { transform: translateY(-1px); }
 .custom-toast.error { border-left-color: #dc3545; }
 .custom-toast.delete { border-left-color: #ff9800; }
 
+/* --- Undo Button for Soft Deletes --- */
+.custom-toast .undo-btn {
+    background-color: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    transition: all 0.2s ease;
+}
+.custom-toast .undo-btn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
 /* ============================================================== */
 /* 8. DARK MODE & THEMES                                          */
 /* ============================================================== */
