@@ -571,10 +571,14 @@ function injectExportButtons(tableId, containerId, importType = null) {
     const header = $(`#${tableId}`).closest('.modern-card').find('.btn-add-modern').parent();
     header.addClass('d-flex gap-2 align-items-center');
     
+    const activeUser = JSON.parse(localStorage.getItem('activeUser')) || {};
+    const role = activeUser.position || 'Guest';
+    const canImport = !['Employee', 'Staff', 'Guest'].includes(role);
+    
     if ($(`#${containerId}`).length === 0) {
         let html = `<div id="${containerId}" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>`;
         
-        if (importType) {
+        if (importType && canImport) {
             html += `
             <div class="d-flex gap-1 border-end pe-2 border-secondary-subtle">
                 <input type="file" id="importFile_${importType}" accept=".csv" style="display:none;" onchange="processImport(event, '${importType}')">
