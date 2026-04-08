@@ -1,6 +1,5 @@
 /* ==========================================================================
    ICTU INVENTORY SYSTEM - MASTER JAVASCRIPT LOGIC
-   Refactored: March 2026
    ========================================================================== */
 
 /* ============================================================== */
@@ -690,7 +689,7 @@ if (typeof $ !== 'undefined') {
         try {
             if (document.getElementById('dashTotalWorking')) {
                 await loadDashboardData();
-                setInterval(loadDashboardData, 30000);
+                setInterval(() => loadDashboardData(true), 30000);
             }
             else if ($('#purchaseTable').length) {
                 $('#purchaseTable').DataTable({
@@ -763,6 +762,17 @@ if (typeof $ !== 'undefined') {
 /* ============================================================== */
 document.addEventListener('DOMContentLoaded', () => {
     if (document.body.classList.contains('login-body')) document.body.classList.add('page-loaded');
+
+    const resetModalEl = document.getElementById('resetPassModal');
+    if (resetModalEl) {
+        resetModalEl.addEventListener('hidden.bs.modal', function () {
+            const userModal = document.getElementById('userModal');
+            if (userModal && userModal.classList.contains('show')) {
+                document.body.classList.add('modal-open');
+                userModal.focus();
+            }
+        });
+    }
 
     // Make 'Enter' key trigger saves inside Modals
     document.querySelectorAll('.modal').forEach(modalElement => {
@@ -870,16 +880,17 @@ function animateValue(id, start, end, duration) {
 let dashGlobalItems = [];
 let statusChartInstance = null; 
 
-async function loadDashboardData() {
+async function loadDashboardData(isBackgroundRefresh = false) {
     const dateElement = document.getElementById('dashCurrentDate');
     if (dateElement) dateElement.innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     try {
-        // Show Skeletons(Target ID, Columns, Rows)
-        showSkeleton('dashActivityFeed', 3, 3);
-        showSkeleton('dashRecentPRs', 3, 3);
-        showSkeleton('dashRecentItems', 3, 4);
-        
+        if (!isBackgroundRefresh) {
+            showSkeleton('dashActivityFeed', 3, 3);
+            showSkeleton('dashRecentPRs', 3, 3);
+            showSkeleton('dashRecentItems', 3, 4);
+        }
+
         const [items, prs, statuses] = await Promise.all([ apiFetch('/Inventory'), apiFetch('/PurchaseRequests'), apiFetch('/ItemStatus') ]);
         dashGlobalItems = items;
 
