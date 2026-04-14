@@ -1095,7 +1095,7 @@ async function savePurchase() {
     if (actionType === 'delete') {
         closeModal(); 
         
-        showNotification(`Deleting PR ${pr}`, 'delete', {
+        showNotification(`Deleting Purchase Request ${pr}`, 'delete', {
             itemName: `Purchase Request ${pr}`, 
             executeApiDelete: async () => {
                 try {
@@ -1109,7 +1109,7 @@ async function savePurchase() {
                     showNotification(`Deleted Purchase Request ${pr}`, 'success');
 
                     let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                    history.unshift({ message: `Permanently deleted PR ${pr}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                    history.unshift({ message: `Deleted Purchase Request ${pr}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
                     sessionStorage.setItem('notifHistory', JSON.stringify(history));
                     if (typeof updateNotificationUI === 'function') updateNotificationUI();
                 } catch (error) { showNotification(error.message, 'error'); }
@@ -1186,7 +1186,7 @@ function openItemModal(actionType) {
 
     if (actionType === 'add') {
         title.textContent = "Add Inventory Item"; serialLabel.textContent = "Purchase Number:";
-        serialField.placeholder = "Enter PR Number..."; serialField.value = ""; nameField.value = ""; statusField.value = "Working"; dateField.value = ""; remarksField.value = "";
+        serialField.placeholder = "Enter Purchase Number..."; serialField.value = ""; nameField.value = ""; statusField.value = "Working"; dateField.value = ""; remarksField.value = "";
         saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
     } else if (actionType === 'edit') {
