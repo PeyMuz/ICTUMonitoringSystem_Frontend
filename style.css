@@ -605,7 +605,7 @@ html.dark-mode .theme-toggle-login:hover {
 }
 
 .notification-dropdown {
-    position: absolute; top: calc(100% + 15px); right: -60px; background-color: #ffffff; color: #1e293b;
+    position: absolute; top: calc(100% + 25px); right: 0px; background-color: #ffffff; color: #1e293b;
     width: 300px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 2000; border: 1px solid #e2e8f0;
     visibility: hidden; opacity: 0; transform: translateY(-15px); transition: all 0.3s ease;
     display: flex; flex-direction: column; cursor: default;

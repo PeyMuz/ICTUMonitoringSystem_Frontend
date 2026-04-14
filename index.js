@@ -272,19 +272,25 @@ function showNotification(message, type = 'success', undoConfig = null) {
     setTimeout(() => toast.classList.add('show'), 10);
 
     if (undoConfig) {
-        let isUndone = false;
+        let timeLeft = 5;
+        const msgSpan = toast.querySelector('.flex-grow-1');
+
+        msgSpan.innerText = `${message} in ${timeLeft}s...`;
         
-        const timerId = setTimeout(async () => {
-            if (!isUndone) {
+        const timerId = setInterval(async () => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                msgSpan.innerText = `${message} in ${timeLeft}s...`;
+            } else {
+                clearInterval(timerId);
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 500);
-                await undoConfig.executeApiDelete();
+                await undoConfig.executeApiDelete(); 
             }
-        }, 5000);
+        }, 1000);
 
         toast.querySelector('.undo-btn').addEventListener('click', () => {
-            isUndone = true;
-            clearTimeout(timerId);
+            clearInterval(timerId);
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 500);
             showNotification(`${undoConfig.itemName} deletion reversed!`, 'success');
@@ -356,6 +362,12 @@ function showTimeoutWarning() {
         </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
+
+    const openModals = document.querySelectorAll('.modal.show');
+    openModals.forEach(modal => {
+        const modalInstance = bootstrap.Modal.getInstance(modal);
+        if (modalInstance) modalInstance.hide();
+    });
 
     countdownValue = 60;
     document.getElementById('timeoutCountdown').innerText = countdownValue;
@@ -1044,7 +1056,7 @@ function openModal(actionType) {
         descField.readOnly = false;
         if (legacyCheck) legacyCheck.disabled = true;
         
-        saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
+        saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         
     } else if (actionType === 'delete') {
@@ -1081,20 +1093,23 @@ async function savePurchase() {
     const pr = selectedPRData?.prNumber;
 
     if (actionType === 'delete') {
-        closeModal();
+        closeModal(); 
         
-        showNotification(`Deleting Purchase Request ${pr} in 5s...`, 'delete', {
+        showNotification(`Deleting PR ${pr}`, 'delete', {
             itemName: `Purchase Request ${pr}`, 
             executeApiDelete: async () => {
                 try {
                     await apiFetch(`/PurchaseRequests/${pr}`, 'DELETE');
-                    const activeRow = document.querySelector('#purchaseBody tr.table-active');
-                    if (activeRow) table.row(activeRow).remove().draw(false);
+                    
+                    await loadPurchaseRequests(); 
+                    
                     document.getElementById('btnEditAction').disabled = true; document.getElementById('btnDeleteAction').disabled = true;
                     selectedPRData = null; 
-                    
+           
+                    showNotification(`Deleted Purchase Request ${pr}`, 'success');
+
                     let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                    history.unshift({ message: `Deleted Purchase Request ${pr}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                    history.unshift({ message: `Permanently deleted PR ${pr}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
                     sessionStorage.setItem('notifHistory', JSON.stringify(history));
                     if (typeof updateNotificationUI === 'function') updateNotificationUI();
                 } catch (error) { showNotification(error.message, 'error'); }
@@ -1207,21 +1222,23 @@ async function saveItemRecord() {
         const table = $('#itemTable').DataTable();
 
         if (actionType === 'delete') {
-            closeItemModal();
+            closeItemModal(); 
             
-            showNotification(`Deleting Item ${inputId} in 5s...`, 'delete', {
+            showNotification(`Deleting Item ${inputId}`, 'delete', { 
                 itemName: `Item ${inputId}`,
                 executeApiDelete: async () => {
                     try {
                         await apiFetch(`/Inventory/${inputId}`, 'DELETE');
-                        const activeRow = document.querySelector('#itemBody tr.table-active');
-                        if (activeRow) table.row(activeRow).remove().draw(false);
+                        
+                        await loadInventoryItems();
+
                         document.getElementById('btnEditItemAction').disabled = true; document.getElementById('btnDeleteItemAction').disabled = true;
                         selectedItemData = null;
 
-                        // Manually log to the Notification Bell
+                        showNotification(`Deleted Item ${inputId}`, 'success');
+
                         let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                        history.unshift({ message: `Deleted Item ${inputId}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        history.unshift({ message: `Permanently deleted Item ${inputId}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
                         sessionStorage.setItem('notifHistory', JSON.stringify(history));
                         if (typeof updateNotificationUI === 'function') updateNotificationUI();
                     } catch (error) { showNotification(error.message, 'error'); }
@@ -1351,20 +1368,23 @@ async function saveMonRecord() {
         const table = $('#monitorTable').DataTable();
 
         if (actionType === 'delete') {
-            closeMonModal();
+            closeMonModal(); 
             
-            showNotification(`Deleting Status ${id} in 5s...`, 'delete', {
+            showNotification(`Deleting Status Record`, 'delete', {
                 itemName: `Status Record`,
                 executeApiDelete: async () => {
                     try {
                         await apiFetch(`/ItemStatus/${id}`, 'DELETE');
-                        const activeRow = document.querySelector('#monitorBody tr.table-active');
-                        if (activeRow) table.row(activeRow).remove().draw(false);
+                        
+                        await loadStatusRecords();
+
                         document.getElementById('btnEditMonAction').disabled = true; document.getElementById('btnDeleteMonAction').disabled = true;
                         selectedMonData = null;
 
+                        showNotification(`Deleted Status Record for ${serial}`, 'success');
+
                         let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                        history.unshift({ message: `Deleted Status for ${serial}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        history.unshift({ message: `Permanently deleted Status Record for ${serial}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
                         sessionStorage.setItem('notifHistory', JSON.stringify(history));
                         if (typeof updateNotificationUI === 'function') updateNotificationUI();
                     } catch (error) { showNotification(error.message, 'error'); }
@@ -1532,25 +1552,27 @@ async function saveUserRecord() {
 
     try {
         if (actionType === 'delete') {
-            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide(); 
             
-            showNotification(`Terminating User ${username} in 5s...`, 'delete', {
+            showNotification(`Terminating User ${username}`, 'delete', {
                 itemName: `User Account ${username}`,
                 executeApiDelete: async () => {
                     try {
                         await apiFetch(`/Admin/users/${username}`, 'DELETE');
                         document.getElementById('btnEditUserAction').disabled = true; document.getElementById('btnDeleteUserAction').disabled = true;
+                        
                         await loadAdminData();
-                    
+
+                        showNotification(`Terminated user ${username}`, 'success');
+
                         let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                        history.unshift({ message: `Terminated user ${username}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
+                        history.unshift({ message: `Permanently terminated user ${username}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
                         sessionStorage.setItem('notifHistory', JSON.stringify(history));
                         if (typeof updateNotificationUI === 'function') updateNotificationUI();
                     } catch (error) { showNotification(error.message, 'error'); }
                 }
             });
             return;
-
         } else {
             const payload = { Username: username, Password: document.getElementById('modUserPassword').value, FullName: document.getElementById('modUserFullName').value, Role: document.getElementById('modUserRole').value, Division: document.getElementById('modUserDiv').value, Section: document.getElementById('modUserSec').value };
             if (actionType === 'add') {

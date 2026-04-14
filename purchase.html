@@ -29,7 +29,9 @@
                 <i class="fa-solid fa-bell notification-icon"></i>
                 <span class="notification-badge" id="notifBadge">0</span>
                 <div id="notificationDropdown" class="notification-dropdown" onclick="event.stopPropagation()">
-                    <div class="notif-header">Recent Activity</div>
+                    <div class="notif-header">Recent Activity
+                        <i class="fa-solid fa-xmark" style="cursor: pointer; color: #94a3b8; font-size: 16px; margin-left: 138px" onclick="document.getElementById('notificationDropdown').classList.remove('show')"></i>
+                    </div>
                     <div class="notif-body" id="notifBody">
                         </div>
                 </div>
