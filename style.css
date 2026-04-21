@@ -220,6 +220,28 @@ body.dashboard-body.page-loaded { opacity: 1; }
     line-height: 1.4; text-transform: uppercase; letter-spacing: 0.5px;
 }
 
+/* --- MAIN CONTENT LAYOUT FIX --- */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 30px;
+    background-color: transparent;
+    gap: 20px;
+}
+
+.main-content > div.w-100:first-child {
+    flex: 2;
+    max-width: 65%;
+}
+
+.main-content > div.ms-auto {
+    flex: 1;
+    max-width: 30%;
+    margin-top: 0 !important;
+}
+
 /* ============================================================== */
 /* 4. DASHBOARD WIDGETS & CARDS                                   */
 /* ============================================================== */
@@ -597,6 +619,18 @@ html.dark-mode .theme-toggle-login:hover {
     .dashboard-welcome-banner { flex-direction: column; text-align: center; gap: 10px; min-height: auto !important; }
     
     .profile-dropdown { position: fixed; top: 70px; left: 10px; right: 10px; width: auto; }
+
+    /* Fix para sa Mobile Layout ng Main Content */
+    .main-content {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .main-content > div.w-100:first-child,
+    .main-content > div.ms-auto {
+        max-width: 100%;
+    }
 }
 
 /* ============================================================== */
@@ -621,7 +655,16 @@ html.dark-mode .theme-toggle-login:hover {
 }
 .notification-dropdown.show { visibility: visible; opacity: 1; transform: translateY(0); }
 
-.notif-header { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; background-color: #f8fafc; font-weight: bold; border-radius: 8px 8px 0 0; }
+.notif-header { 
+    padding: 12px 15px; 
+    border-bottom: 1px solid #e2e8f0; 
+    background-color: #f8fafc; 
+    font-weight: bold; 
+    border-radius: 8px 8px 0 0; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
 .notif-body { max-height: 350px; overflow-y: auto; }
 .notif-item { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; display: flex; gap: 12px; align-items: flex-start; font-size: 13px; line-height: 1.4; }
 .notif-item:last-child { border-bottom: none; }
