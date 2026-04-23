@@ -105,7 +105,7 @@ body.login-body.page-loaded { opacity: 1; }
 .input-group { margin-bottom: 20px; }
 .input-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #334155; font-size: 0.9rem; transition: color 0.4s ease; }
 .input-group input {
-    width: 100%; padding: 14px 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem;
+    width: 100%; padding: 14px 15px; border: 1px solid #cbd5e1; border-radius: 8px !important; font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s, background-color 0.4s, color 0.4s;
     background-color: #f8fafc;
 }
@@ -553,13 +553,22 @@ html.dark-mode .theme-toggle-login:hover {
 /* ============================================================== */
 .password-wrapper {
     position: relative;
-    display: flex;
+    display: block;
+    width: 100%;
     align-items: center;
+}
+
+.password-wrapper input.form-control,
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px !important;
 }
 
 .password-toggle-icon {
     position: absolute;
     right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     color: #64748b;
     transition: color 0.2s ease;
@@ -568,6 +577,13 @@ html.dark-mode .theme-toggle-login:hover {
 }
 
 .password-toggle-icon:hover { color: #114a91; }
+#forceResetModal .modal-header {
+    border-radius: 8px 8px 0 0;
+}
+#forceResetModal .modal-content {
+    border-radius: 8px;
+    border: none;
+}
 .dark-mode .password-toggle-icon { color: #94a3b8; }
 .dark-mode .password-toggle-icon:hover { color: #38bdf8; }
 

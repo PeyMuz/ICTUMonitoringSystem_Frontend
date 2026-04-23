@@ -537,17 +537,41 @@ async function login() {
     const loginBtn = document.querySelector('.btn-login');
 
     if (loginBtn.disabled) return;
-    if (!user || !pass) { alert('Please enter both username and password.'); return; }
+    if (!user || !pass) { showNotification('Please enter both username and password.', 'error'); return; }
 
     loginBtn.innerText = "Authenticating..."; loginBtn.disabled = true;
 
     try {
         const response = await fetch(`${API_BASE_URL}/Auth/login`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ Username: user, Password: pass })
         });
+
         const data = await response.json();
 
+        // 1. TEMPORARY PASSWORD CHECK
+        if (response.status === 403 && data.forceReset) {
+            // Fix: Changed from 'loginUser' to 'forceResetUsername' to properly pass data to the modal
+            document.getElementById('forceResetUsername').value = user;
+            document.getElementById('forceResetTempPassword').value = pass;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('forceResetModal')).show();
+            
+            // Fix: Re-enable the button in case they cancel the modal
+            loginBtn.innerText = "Log In"; loginBtn.disabled = false;
+            return; 
+        }
+
+        // 2. INVALID CREDENTIALS OR LOCKOUT
+        if (!response.ok) {
+            showNotification(data.message || "Login failed.", "error");
+            
+            // Fix: Re-enable the button so they can try again!
+            loginBtn.innerText = "Log In"; loginBtn.disabled = false;
+            return;
+        }
+
+        // 3. SUCCESSFUL LOGIN
         if (response.ok) {
             localStorage.setItem('jwtToken', data.token);
             const decoded = parseJwt(data.token);
@@ -557,14 +581,14 @@ async function login() {
 
             const activeUser = { name: fullName, username: user, position: userRole, division: decoded.Division || 'N/A', section: decoded.Section || 'N/A' };
             localStorage.setItem('activeUser', JSON.stringify(activeUser));
+            
             window.location.href = "inside.html";
-        } else {
-            alert(data.message || "Invalid credentials. Please try again.");
-            loginBtn.innerText = "Log In"; loginBtn.disabled = false;
         }
     } catch (error) {
         console.error("API Error:", error);
-        alert("Could not connect to the server. Is your API running in Visual Studio?");
+        showNotification("Could not connect to the server. Is your API running?", "error");
+        
+        // Fix: Re-enable the button on server crash
         loginBtn.innerText = "Log In"; loginBtn.disabled = false;
     }
 }
@@ -1524,18 +1548,21 @@ function openUserModal(actionType) {
         title.textContent = "Create New Account";
         userField.value = ''; passField.value = ''; nameField.value = ''; roleField.value = 'Guest'; divField.value = 'NCR'; secField.value = 'ICTU';
         passField.closest('.col-md-6').style.display = 'block';
+        document.getElementById('confirmPassContainer').style.display = 'block'; 
         saveBtn.textContent = "Create User"; saveBtn.className = "btn btn-modern btn-success px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         if(resetBtn) resetBtn.style.display = 'none';
     } else if (actionType === 'edit') {
         title.textContent = "Edit User Privileges";
         userField.value = selectedUserData.username; userField.readOnly = true; nameField.value = selectedUserData.fullName; roleField.value = selectedUserData.role; divField.value = selectedUserData.division; secField.value = selectedUserData.section;
         passField.closest('.col-md-6').style.display = 'none';
+        document.getElementById('confirmPassContainer').style.display = 'none'; 
         saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         if(resetBtn) resetBtn.style.display = 'block';
     } else if (actionType === 'delete') {
         title.textContent = "Terminate Account";
         userField.value = selectedUserData.username; nameField.value = selectedUserData.fullName; roleField.value = selectedUserData.role; divField.value = selectedUserData.division; secField.value = selectedUserData.section;
         passField.closest('.col-md-6').style.display = 'none'; 
+        document.getElementById('confirmPassContainer').style.display = 'none'; 
         [userField, nameField, roleField, divField, secField].forEach(el => { el.readOnly = true; el.disabled = true; });
         saveBtn.textContent = "Delete User"; saveBtn.className = "btn btn-modern btn-danger px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
         if(resetBtn) resetBtn.style.display = 'none';
@@ -1546,6 +1573,7 @@ function openUserModal(actionType) {
 async function saveUserRecord() {
     const actionType = document.getElementById('userModal').getAttribute('data-current-action');
     const username = document.getElementById('modUserUsername').value;
+    const role = document.getElementById('modUserRole').value;
     const btnSave = document.getElementById('btnSaveUser');
     const originalText = btnSave.textContent;
     btnSave.textContent = "Processing..."; btnSave.disabled = true;
@@ -1559,10 +1587,10 @@ async function saveUserRecord() {
                 executeApiDelete: async () => {
                     try {
                         await apiFetch(`/Admin/users/${username}`, 'DELETE');
-                        document.getElementById('btnEditUserAction').disabled = true; document.getElementById('btnDeleteUserAction').disabled = true;
+                        document.getElementById('btnEditUserAction').disabled = true; 
+                        document.getElementById('btnDeleteUserAction').disabled = true;
                         
                         await loadAdminData();
-
                         showNotification(`Terminated user ${username}`, 'success');
 
                         let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
@@ -1574,9 +1602,26 @@ async function saveUserRecord() {
             });
             return;
         } else {
-            const payload = { Username: username, Password: document.getElementById('modUserPassword').value, FullName: document.getElementById('modUserFullName').value, Role: document.getElementById('modUserRole').value, Division: document.getElementById('modUserDiv').value, Section: document.getElementById('modUserSec').value };
+            const passValue = document.getElementById('modUserPassword') ? document.getElementById('modUserPassword').value : '';
+            
+            const payload = { 
+                Username: username, 
+                Password: passValue, 
+                FullName: document.getElementById('modUserFullName').value, 
+                Role: role, 
+                Division: document.getElementById('modUserDiv').value, 
+                Section: document.getElementById('modUserSec').value 
+            };
+
             if (actionType === 'add') {
+                const confirmPass = document.getElementById('modUserConfirmPassword').value;
+
+                if (passValue !== confirmPass) {
+                    showNotification("Passwords do not match!", "error");
+                    return;
+                }
                 if (!payload.Username || !payload.Password) throw new Error("Username and Password are required!");
+                
                 const response = await apiFetch('/Auth/seed-admin', 'POST', payload);
                 showNotification(response.message, 'success');
             } else if (actionType === 'edit') {
@@ -1584,10 +1629,15 @@ async function saveUserRecord() {
                 showNotification(response.message, 'success');
             }
         }
+        
         bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
         await loadAdminData();
-    } catch (error) { showNotification(error.message, "error"); } 
-    finally { btnSave.textContent = originalText; btnSave.disabled = false; }
+        
+    } catch (error) { 
+        showNotification(error.message, "error"); 
+    } finally { 
+        btnSave.textContent = originalText; btnSave.disabled = false; 
+    }
 }
 
 function resetUserPassword() {
@@ -1599,8 +1649,12 @@ async function confirmPasswordReset() {
     const username = document.getElementById('modUserUsername').value.trim();
     const newPassword = document.getElementById('newTempPassword').value;
     const confirmBtn = document.getElementById('btnConfirmReset');
+    const confirmPassword = document.getElementById('confirmTempPassword').value;
 
-    if (newPassword.length < 6) { showNotification("Password must be at least 6 characters long.", 'error'); return; }
+    if (!newPassword || newPassword !== confirmPassword) { 
+        showNotification("Passwords cannot be empty and must match.", 'error'); 
+        return; 
+    }
 
     const originalText = confirmBtn.textContent;
     confirmBtn.textContent = "Resetting..."; confirmBtn.disabled = true;
@@ -1613,4 +1667,84 @@ async function confirmPasswordReset() {
         await loadAdminData(); 
     } catch (error) { showNotification("Error: " + error.message, 'error'); } 
     finally { confirmBtn.textContent = originalText; confirmBtn.disabled = false; }
+}
+
+// ==========================================
+// NEW: SELF-SERVICE PASSWORD RESET (DASHBOARD)
+// ==========================================
+async function changeMyPassword() {
+    const oldPass = document.getElementById('selfOldPass').value;
+    const newPass = document.getElementById('selfNewPass').value;
+    const confirmPass = document.getElementById('selfConfirmPass').value;
+    const btnSave = document.getElementById('btnSaveSelfPass');
+
+    if (!oldPass || !newPass) { showNotification("Please fill out all fields.", "error"); return; }
+    if (newPass !== confirmPass) { showNotification("New passwords do not match.", "error"); return; }
+
+    const originalText = btnSave.textContent;
+    btnSave.textContent = "Updating..."; btnSave.disabled = true;
+
+    try {
+        const response = await apiFetch('/Auth/change-password', 'POST', { OldPassword: oldPass, NewPassword: newPass });
+        showNotification(response.message, 'success');
+        
+        document.getElementById('selfOldPass').value = '';
+        document.getElementById('selfNewPass').value = '';
+        document.getElementById('selfConfirmPass').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('selfChangePassModal')).hide();
+        
+    } catch (error) { 
+        showNotification("Error: " + error.message, 'error'); 
+    } finally { 
+        btnSave.textContent = originalText; btnSave.disabled = false; 
+    }
+}
+
+// ==========================================
+// NEW: MANDATORY FORCE RESET (LOGIN SCREEN)
+// ==========================================
+async function submitForceReset() {
+    const user = document.getElementById('loginUser').value;
+    const tempPass = document.getElementById('forceResetTempPassword').value;
+    const newPass = document.getElementById('forceNewPassword').value;
+    const confirmPass = document.getElementById('forceConfirmPassword').value;
+    const btnSubmit = document.getElementById('btnSubmitForceReset');
+
+    if (!newPass) { showNotification("Please enter a new password.", "error"); return; }
+    if (newPass !== confirmPass) { showNotification("Passwords do not match.", "error"); return; }
+
+    // Frontend Complexity Check (Matches Backend)
+    const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_\-+={[}\]|\\:;"'<,>.?/~]).{12,}$/;
+    if (!passRegex.test(newPass)) {
+        showNotification("Password must be at least 12 characters with uppercase, lowercase, and a special character.", "error");
+        return;
+    }
+
+    const originalText = btnSubmit.textContent;
+    btnSubmit.textContent = "Securing..."; btnSubmit.disabled = true;
+
+    try {
+        // NOTE: Use your actual absolute API URL if apiFetch isn't available on the login screen
+        const response = await fetch(`${API_BASE_URL}/Auth/force-reset`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Username: user, TempPassword: tempPass, NewPassword: newPass })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.message || "Failed to reset password.");
+
+        showNotification("Account secured! Please log in with your new password.", "success");
+        bootstrap.Modal.getInstance(document.getElementById('forceResetModal')).hide();
+        
+        // Clear the login form so they have to type the new password
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+
+    } catch (error) {
+        showNotification(error.message, "error");
+    } finally {
+        btnSubmit.textContent = originalText; btnSubmit.disabled = false;
+    }
 }

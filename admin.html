@@ -168,15 +168,22 @@
                     </div>
                     <div class="modal-body p-4">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Username:</label>
-                                <input type="text" class="form-control" id="modUserUsername" placeholder="e.g. jdoe">
+                                <input type="text" class="form-control" id="modUserUsername" autocomplete="new-password" placeholder="e.g. jdoe@deped.gov.ph">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Password:</label>
                                 <div class="password-wrapper">
-                                    <input type="password" class="form-control" id="modUserPassword" placeholder="Minimum 6 chars">
+                                    <input type="password" class="form-control" id="modUserPassword" placeholder="Temporary Password">
                                     <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('modUserPassword', this)"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="confirmPassContainer">
+                                <label class="form-label fw-bold">Confirm Password:</label>
+                                <div class="password-wrapper">
+                                    <input type="password" class="form-control" id="modUserConfirmPassword" placeholder="Re-type password">
+                                    <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('modUserConfirmPassword', this)"></i>
                                 </div>
                             </div>
                             <div class="col-md-12 mb-3">
@@ -262,10 +269,19 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
-                        <label class="form-label fw-bold">New Temporary Password:</label>
-                        <div class="password-wrapper">
-                            <input type="password" class="form-control" id="newTempPassword" placeholder="Minimum 6 chars">
-                            <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('newTempPassword', this)"></i>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">New Temporary Password:</label>
+                            <div class="password-wrapper">
+                                <input type="password" class="form-control" id="newTempPassword" placeholder="Temporary Password">
+                                <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('newTempPassword', this)"></i>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">Confirm Password:</label>
+                            <div class="password-wrapper">
+                                <input type="password" class="form-control" id="confirmTempPassword" placeholder="Confirm Password">
+                                <i class="fa-regular fa-eye password-toggle-icon" onclick="togglePassword('confirmTempPassword', this)"></i>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer justify-content-center border-top-0 pt-0">
