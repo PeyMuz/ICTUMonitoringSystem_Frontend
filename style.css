@@ -382,7 +382,9 @@ div.dt-buttons .btn:hover { transform: translateY(-1px); }
 .profile-dropdown .dropdown-header span { font-size: 13px; color: #666; margin-top: 3px; font-family: Arial, sans-serif; background-color: #e2e8f0; padding: 4px 12px; border-radius: 12px; display: inline-block; }
 .dropdown-body { padding: 15px; font-size: 14px; line-height: 1.8; font-family: Arial, sans-serif; }
 .dropdown-body p { margin: 0; }
-.dropdown-footer { padding: 15px; border-top: 1px solid #ddd; background-color: #fafafa; }
+.dropdown-footer { display: flex; flex-direction: column; gap: 10px; padding: 15px; border-top: 1px solid #ddd; background-color: #fafafa; }
+.dropdown-changePass { width: 100%; padding: 10px; border: none; background-color: #ffc107; color: #000000; border-radius: 6px; cursor: pointer; font-family: 'Arial Black', Arial, sans-serif; transition: background-color 0.2s; gap: 10px }
+.dropdown-changePass:hover { background-color: #e0a800; }
 .dropdown-logout { width: 100%; padding: 10px; border: none; background-color: #dc3545; color: #ffffff; border-radius: 6px; cursor: pointer; font-family: 'Arial Black', Arial, sans-serif; transition: background-color 0.2s; }
 .dropdown-logout:hover { background-color: #c82333; }
 

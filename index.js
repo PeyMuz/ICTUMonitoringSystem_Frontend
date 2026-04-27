@@ -552,12 +552,9 @@ async function login() {
 
         // 1. TEMPORARY PASSWORD CHECK
         if (response.status === 403 && data.forceReset) {
-            // Fix: Changed from 'loginUser' to 'forceResetUsername' to properly pass data to the modal
             document.getElementById('forceResetUsername').value = user;
             document.getElementById('forceResetTempPassword').value = pass;
             bootstrap.Modal.getOrCreateInstance(document.getElementById('forceResetModal')).show();
-            
-            // Fix: Re-enable the button in case they cancel the modal
             loginBtn.innerText = "Log In"; loginBtn.disabled = false;
             return; 
         }
@@ -565,8 +562,6 @@ async function login() {
         // 2. INVALID CREDENTIALS OR LOCKOUT
         if (!response.ok) {
             showNotification(data.message || "Login failed.", "error");
-            
-            // Fix: Re-enable the button so they can try again!
             loginBtn.innerText = "Log In"; loginBtn.disabled = false;
             return;
         }
@@ -1675,7 +1670,23 @@ async function saveUserRecord() {
 }
 
 function resetUserPassword() {
+    const modalLabel = document.getElementById('resetPassModalAdmin');
+    if (modalLabel) modalLabel.textContent = "Reset User Password";
+    
+    const btnConfirm = document.getElementById('btnConfirmReset');
+    btnConfirm.textContent = "Confirm";
+    
+    // 2. Reroute the click back to the Admin API function
+    btnConfirm.onclick = confirmPasswordReset;
+
+    // 3. Hide the Current Password field
+    const currentPassContainer = document.getElementById('currentPassContainer');
+    if (currentPassContainer) currentPassContainer.style.display = 'none';
+
+    // 4. Clear inputs and open
     document.getElementById('newTempPassword').value = '';
+    document.getElementById('confirmTempPassword').value = '';
+    
     bootstrap.Modal.getOrCreateInstance(document.getElementById('resetPassModal')).show();
 }
 
@@ -1723,33 +1734,91 @@ async function confirmPasswordReset() {
 }
 
 // ==========================================
-// NEW: SELF-SERVICE PASSWORD RESET (DASHBOARD)
+// NEW: SELF-SERVICE PASSWORD RESET
 // ==========================================
-async function changeMyPassword() {
-    const oldPass = document.getElementById('selfOldPass').value;
-    const newPass = document.getElementById('selfNewPass').value;
-    const confirmPass = document.getElementById('selfConfirmPass').value;
-    const btnSave = document.getElementById('btnSaveSelfPass');
+function openChangePasswordModal() {
+    // 1. Fully hide the profile dropdown and its overlay
+    window.forceCloseDropdown(); 
 
-    if (!oldPass || !newPass) { showNotification("Please fill out all fields.", "error"); return; }
-    if (newPass !== confirmPass) { showNotification("New passwords do not match.", "error"); return; }
+    // 2. Safely update the Title
+    const title = document.getElementById('resetPassModalLabel');
+    if (title) title.textContent = "Change My Password";
+    
+    // 3. Safely update the Button
+    const btnConfirm = document.getElementById('btnConfirmReset');
+    if (btnConfirm) {
+        btnConfirm.textContent = "Update Password";
+        btnConfirm.onclick = submitPasswordChange;
+    }
 
-    const originalText = btnSave.textContent;
-    btnSave.textContent = "Updating..."; btnSave.disabled = true;
+    // 4. Safely show the Current Password container
+    const currentPassContainer = document.getElementById('currentPassContainer');
+    if (currentPassContainer) currentPassContainer.style.display = 'block';
+    
+    // 5. Safely clear the inputs
+    const currentPass = document.getElementById('currentPassword');
+    if (currentPass) currentPass.value = '';
+    
+    const newPass = document.getElementById('newTempPassword');
+    if (newPass) newPass.value = '';
+    
+    const confirmPass = document.getElementById('confirmTempPassword');
+    if (confirmPass) confirmPass.value = '';
+
+    // 6. Safely show the Modal
+    const modalEl = document.getElementById('resetPassModal');
+    if (modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    } else {
+        console.error("CRITICAL: The modal with ID 'resetPassModal' is missing from this HTML file!");
+        showNotification("Error: Password modal not found on this page.", "error");
+    }
+}
+
+// --- API SUBMISSION LOGIC ---
+async function submitPasswordChange() {
+    const currentPass = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newTempPassword').value;
+    const confirmPass = document.getElementById('confirmTempPassword').value;
+
+    if (!currentPass || !newPass || !confirmPass) {
+        showNotification("All fields are required.", "error");
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        showNotification("New passwords do not match.", "error");
+        return;
+    }
+
+    if (currentPass === newPass) {
+        showNotification("Your new password cannot be the same as your current password.", "error");
+        return;
+    }
+
+    const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_\-+={[}\]|\\:;"'<,>.?/~]).{12,}$/;
+    if (!passRegex.test(newPass)) {
+        showNotification("Password must be 12+ chars with upper, lower, number, and special character.", "error");
+        return;
+    }
+
+    const btnSubmit = document.getElementById('btnConfirmReset');
+    const originalText = btnSubmit.textContent;
+    btnSubmit.textContent = "Updating..."; btnSubmit.disabled = true;
 
     try {
-        const response = await apiFetch('/Auth/change-password', 'POST', { OldPassword: oldPass, NewPassword: newPass });
-        showNotification(response.message, 'success');
-        
-        document.getElementById('selfOldPass').value = '';
-        document.getElementById('selfNewPass').value = '';
-        document.getElementById('selfConfirmPass').value = '';
-        bootstrap.Modal.getInstance(document.getElementById('selfChangePassModal')).hide();
-        
-    } catch (error) { 
-        showNotification("Error: " + error.message, 'error'); 
-    } finally { 
-        btnSave.textContent = originalText; btnSave.disabled = false; 
+        const response = await apiFetch('/Auth/change-password', 'POST', {
+            OldPassword: currentPass,
+            NewPassword: newPass
+        });
+
+        showNotification(response.message || "Password successfully changed!", "success");
+        bootstrap.Modal.getInstance(document.getElementById('resetPassModal')).hide();
+    } catch (error) {
+        showNotification(error.message, "error");
+    } finally {
+        btnSubmit.textContent = originalText; 
+        btnSubmit.disabled = false;
     }
 }
 
