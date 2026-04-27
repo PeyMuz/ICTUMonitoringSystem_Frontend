@@ -588,10 +588,18 @@ async function login() {
     }
 }
 
-function logout() {
-    localStorage.removeItem('activeUser');
-    localStorage.removeItem('jwtToken');
-    window.location.href = "log.html";
+async function logout() {
+    try {
+        if (localStorage.getItem('jwtToken')) {
+            await apiFetch('/Auth/logout', 'POST');
+        }
+    } catch (error) {
+        console.warn("Logout API call failed, clearing local session anyway.");
+    } finally {
+        localStorage.removeItem('activeUser');
+        localStorage.removeItem('jwtToken');
+        window.location.href = "log.html";
+    }
 }
 
 function loadUser() {
