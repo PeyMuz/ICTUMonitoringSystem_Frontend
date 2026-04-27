@@ -1843,6 +1843,12 @@ async function submitForceReset() {
     if (!newPass) { showNotification("Please enter a new password.", "error"); return; }
     if (newPass !== confirmPass) { showNotification("Passwords do not match.", "error"); return; }
 
+    // Prevent reusing the temporary/expired password
+    if (tempPass === newPass) {
+        showNotification("Your new password cannot be the same as your temporary or expired password.", "error");
+        return;
+    }
+
     // Frontend Complexity Check (Matches Backend)
     const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_\-+={[}\]|\\:;"'<,>.?/~]).{12,}$/;
     if (!passRegex.test(newPass)) {
