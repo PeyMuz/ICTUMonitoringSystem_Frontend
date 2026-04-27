@@ -297,6 +297,11 @@ body.dashboard-body.page-loaded { opacity: 1; }
 .btn-delete-modern { background-color: #dc3545; }
 .btn-delete-modern:hover { background-color: #c82333; transform: scale(1.02); }
 .btn-modern:disabled { opacity: 0.5 !important; cursor: not-allowed !important; transform: none !important; filter: grayscale(80%); }
+.btn-warning-modern { background-color: #dc3545; color: #ffffff; border: none; }
+.btn-warning-modern:hover:not(:disabled) { background-color: #dc3545; color: #ffffff; }
+.btn-success-modern { background-color: #10b981; color: #ffffff; border: none; }
+.btn-success-modern:hover:not(:disabled) { background-color: #059669; color: #ffffff; }
+.btn-warning-modern:disabled, .btn-success-modern:disabled { opacity: 0.5; cursor: not-allowed; background-color: #94a3b8; }
 
 .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #ffffff; display: inline-block; letter-spacing: 0.5px; }
 .status-working { background-color: #198754; }    

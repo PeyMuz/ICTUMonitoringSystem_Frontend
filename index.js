@@ -617,7 +617,7 @@ function applyRoleBasedAccess() {
     const role = JSON.parse(activeUserStr).position;
     const currentPath = window.location.pathname.toLowerCase();
 
-    if (currentPath.includes('admin.html') && role !== 'Master') { window.location.href = 'inside.html'; return; }
+    if (currentPath.includes('admin.html') && role !== 'Superadmin') { window.location.href = 'inside.html'; return; }
 
     if (role === 'Guest') {
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -638,7 +638,7 @@ function applyRoleBasedAccess() {
         document.querySelectorAll('.btn-add-modern, .btn-edit-modern, .btn-delete-modern').forEach(btn => btn.style.display = 'none');
     }
 
-    if (role !== 'Master') {
+    if (role !== 'Superadmin') {
         document.querySelectorAll('.admin-only-link').forEach(link => link.style.display = 'none');
     }
 }
@@ -780,9 +780,36 @@ if (typeof $ !== 'undefined') {
                 await loadAdminData(); 
                 
                 setInterval(refreshAuditLogs, 10000); 
-                bindRowSelection('usersTableBody', 'btnEditUserAction', 'btnDeleteUserAction', (cells) => { 
-                    if (cells) { const divSec = cells[3].innerText.split(' / '); selectedUserData = { username: cells[0].innerText, fullName: cells[1].innerText, role: cells[2].innerText, division: divSec[0].trim(), section: divSec[1] ? divSec[1].trim() : '' }; } 
-                    else selectedUserData = null; 
+                bindRowSelection('usersTableBody', 'btnEditUserAction', 'btnDisableUserAction', (cells) => { 
+                    if (cells) { 
+                        const divSec = cells[3].innerText.split(' / '); 
+                        
+                        selectedUserData = { 
+                            username: cells[0].innerText, 
+                            fullName: cells[1].innerText, 
+                            role: cells[2].innerText,
+                            division: divSec[0].trim(), 
+                            section: divSec[1] ? divSec[1].trim() : '',
+                            isActive: cells[4].innerText.trim() === 'Active' 
+                        }; 
+                        
+                        const actionBtn = document.getElementById('btnDisableUserAction');
+                        if (selectedUserData.isActive) {
+                            actionBtn.innerHTML = '<i class="fa-solid fa-user-slash"></i> Disable';
+                            actionBtn.className = 'btn-modern btn-warning-modern';
+                        } else {
+                            actionBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> Enable';
+                            actionBtn.className = 'btn-modern btn-success-modern';
+                        }
+                    } else {
+                        selectedUserData = null; 
+                        
+                        const actionBtn = document.getElementById('btnDisableUserAction');
+                        if (actionBtn) {
+                            actionBtn.innerHTML = '<i class="fa-solid fa-user-slash"></i> Toggle Status';
+                            actionBtn.className = 'btn-modern btn-warning-modern';
+                        }
+                    }
                 });
             }
         } catch (error) { console.error("Initialization Error:", error); }
@@ -861,7 +888,7 @@ document.addEventListener('keydown', function(event) {
             if (event.key === '3') { window.location.href = 'item.html'; return; }
             if (event.key === '4') { window.location.href = 'monitor.html'; return; }
         }
-        if (role === 'Master' && event.key === '5') { window.location.href = 'admin.html'; return; }
+        if (role === 'Superadmin' && event.key === '5') { window.location.href = 'admin.html'; return; }
         if (event.key === '0') { toggleTheme(); return; }
     }
 
@@ -1498,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ============================================================== */
 async function loadAdminData() {
     try {
-        showSkeleton('usersTable', 4, 5);
+        showSkeleton('usersTable', 5, 5);
 
         const users = await apiFetch('/Admin/users');
         const usrTableObj = $('#usersTable').DataTable();
@@ -1506,10 +1533,19 @@ async function loadAdminData() {
         usrTableObj.clear();
         users.forEach(u => {
             let roleBadge = 'bg-secondary';
-            if (u.role === 'Master') roleBadge = 'bg-danger';
+            if (u.role === 'Superadmin') roleBadge = 'bg-danger';
             if (u.role === 'Administrator') roleBadge = 'bg-primary';
             if (u.role === 'Employee') roleBadge = 'bg-success';
-            usrTableObj.row.add([u.username, u.fullName, `<span class="badge ${roleBadge}">${u.role}</span>`, `<span class="text-muted">${u.division} / ${u.section}</span>`]);
+            
+            let statusBadge = (u.isActive !== false) ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Disabled</span>';
+            
+            usrTableObj.row.add([
+                u.username, 
+                u.fullName, 
+                `<span class="badge ${roleBadge}">${u.role}</span>`, 
+                `<span class="text-muted">${u.division} / ${u.section}</span>`, 
+                statusBadge 
+            ]);
         });
         usrTableObj.draw(false);
         
@@ -1540,7 +1576,7 @@ function openUserModal(actionType) {
     document.getElementById('userModal').setAttribute('data-current-action', actionType);
     const title = document.querySelector('#userModal .modal-title');
     const [userField, passField, nameField, roleField, divField, secField] = ['modUserUsername', 'modUserPassword', 'modUserFullName', 'modUserRole', 'modUserDiv', 'modUserSec'].map(id => document.getElementById(id));
-    const [saveBtn, cancelBtn, resetBtn] = ['btnSaveUser', 'btnCancelUser', 'btnResetPass'].map(id => document.getElementById(id));
+    const [saveBtn, cancelBtn, resetBtn, hardDeleteBtn] = ['btnSaveUser', 'btnCancelUser', 'btnResetPass', 'btnHardDelete'].map(id => document.getElementById(id));
 
     [userField, passField, nameField, roleField, divField, secField].forEach(el => { el.readOnly = false; el.disabled = false; });
     
@@ -1551,6 +1587,7 @@ function openUserModal(actionType) {
         document.getElementById('confirmPassContainer').style.display = 'block'; 
         saveBtn.textContent = "Create User"; saveBtn.className = "btn btn-modern btn-success px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         if(resetBtn) resetBtn.style.display = 'none';
+        if(hardDeleteBtn) hardDeleteBtn.style.display = 'none';
     } else if (actionType === 'edit') {
         title.textContent = "Edit User Privileges";
         userField.value = selectedUserData.username; userField.readOnly = true; nameField.value = selectedUserData.fullName; roleField.value = selectedUserData.role; divField.value = selectedUserData.division; secField.value = selectedUserData.section;
@@ -1558,14 +1595,23 @@ function openUserModal(actionType) {
         document.getElementById('confirmPassContainer').style.display = 'none'; 
         saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         if(resetBtn) resetBtn.style.display = 'block';
+        if(hardDeleteBtn) hardDeleteBtn.style.display = 'none';
     } else if (actionType === 'delete') {
-        title.textContent = "Terminate Account";
+        title.textContent = "Toggle Account Status";
         userField.value = selectedUserData.username; nameField.value = selectedUserData.fullName; roleField.value = selectedUserData.role; divField.value = selectedUserData.division; secField.value = selectedUserData.section;
+        
         passField.closest('.col-md-6').style.display = 'none'; 
         document.getElementById('confirmPassContainer').style.display = 'none'; 
+        
         [userField, nameField, roleField, divField, secField].forEach(el => { el.readOnly = true; el.disabled = true; });
-        saveBtn.textContent = "Delete User"; saveBtn.className = "btn btn-modern btn-danger px-4"; cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
+        
+        const isCurrentlyActive = selectedUserData.isActive;
+        saveBtn.textContent = isCurrentlyActive ? "Disable User" : "Enable User"; 
+        saveBtn.className = isCurrentlyActive ? "btn btn-modern btn-warning px-4" : "btn btn-modern btn-success px-4"; 
+        cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
+        
         if(resetBtn) resetBtn.style.display = 'none';
+        if(hardDeleteBtn) hardDeleteBtn.style.display = 'block';
     }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('userModal')).show();
 }
@@ -1580,26 +1626,14 @@ async function saveUserRecord() {
 
     try {
         if (actionType === 'delete') {
-            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide(); 
+            const response = await apiFetch(`/Admin/users/${username}/toggle-status`, 'PATCH');
+            showNotification(response.message, 'success');
+            document.getElementById('btnEditUserAction').disabled = true; 
+            document.getElementById('btnDisableUserAction').disabled = true;
             
-            showNotification(`Terminating User ${username}`, 'delete', {
-                itemName: `User Account ${username}`,
-                executeApiDelete: async () => {
-                    try {
-                        await apiFetch(`/Admin/users/${username}`, 'DELETE');
-                        document.getElementById('btnEditUserAction').disabled = true; 
-                        document.getElementById('btnDeleteUserAction').disabled = true;
-                        
-                        await loadAdminData();
-                        showNotification(`Terminated user ${username}`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            await loadAdminData();
 
-                        let history = JSON.parse(sessionStorage.getItem('notifHistory')) || [];
-                        history.unshift({ message: `Permanently terminated user ${username}`, type: 'delete', icon: 'fa-trash-can', iconColor: '#ff9800', time: new Date().toISOString() });
-                        sessionStorage.setItem('notifHistory', JSON.stringify(history));
-                        if (typeof updateNotificationUI === 'function') updateNotificationUI();
-                    } catch (error) { showNotification(error.message, 'error'); }
-                }
-            });
             return;
         } else {
             const passValue = document.getElementById('modUserPassword') ? document.getElementById('modUserPassword').value : '';
@@ -1643,6 +1677,25 @@ async function saveUserRecord() {
 function resetUserPassword() {
     document.getElementById('newTempPassword').value = '';
     bootstrap.Modal.getOrCreateInstance(document.getElementById('resetPassModal')).show();
+}
+
+function confirmHardDelete() {
+    const username = selectedUserData.username;
+    bootstrap.Modal.getInstance(document.getElementById('userModal')).hide(); 
+
+    showNotification(`Are you sure you want to PERMANENTLY delete ${username}?`, 'delete', {
+        itemName: `User Account ${username}`,
+        executeApiDelete: async () => {
+            try {
+                await apiFetch(`/Admin/users/${username}`, 'DELETE');
+                document.getElementById('btnEditUserAction').disabled = true; 
+                document.getElementById('btnDisableUserAction').disabled = true;
+                
+                await loadAdminData();
+                showNotification(`Permanently deleted user ${username}`, 'success');
+            } catch (error) { showNotification(error.message, 'error'); }
+        }
+    });
 }
 
 async function confirmPasswordReset() {
