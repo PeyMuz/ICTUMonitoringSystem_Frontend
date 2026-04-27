@@ -54,6 +54,7 @@ body.login-body.page-loaded { opacity: 1; }
     padding: 40px;
     text-align: center;
     color: #ffffff;
+    position:relative;
 }
 
 .login-logo-box {
@@ -698,4 +699,14 @@ html.dark-mode .theme-toggle-login:hover {
 @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* For animation*/
+#waveCanvas{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:0;
 }
