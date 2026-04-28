@@ -322,10 +322,25 @@ function showNotification(message, type = 'success', undoConfig = null) {
 }
 
 // --- Formatter ---
+// --- Formatter ---
 function formatLongText(text) {
     if (!text) return '';
-    const safeText = text.replace(/"/g, '&quot;');
-    return `<span title="${safeText}" style="cursor: help; border-bottom: 1px dashed #9ca3af;">${text}</span>`;
+
+    // 1. Escape quotes to prevent breaking the HTML attribute
+    // 2. Convert '\n' to '&#10;' so the hover tooltip perfectly respects line breaks
+    const safeTooltipText = text.replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+
+    // 3. Use 'pre-line' to render actual line breaks in the HTML
+    // 4. Use '-webkit-line-clamp' to restrict it to 3 lines maximum so the table stays neat
+    return `<div title="${safeTooltipText}" 
+                 style="cursor: help; 
+                        white-space: pre-line; 
+                        display: -webkit-box; 
+                        -webkit-line-clamp: 3; 
+                        -webkit-box-orient: vertical; 
+                        overflow: hidden; 
+                        border-bottom: 1px dashed #9ca3af; 
+                        padding-bottom: 2px;">${text}</div>`;
 }
 
 // --- Idle Timeout & Auto-Logout ---
@@ -667,22 +682,34 @@ function getExportButtons() {
 function injectExportButtons(tableId, containerId, importType = null) {
     const header = $(`#${tableId}`).closest('.modern-card').find('.btn-add-modern').parent();
     header.addClass('d-flex gap-2 align-items-center');
-    
     const activeUser = JSON.parse(localStorage.getItem('activeUser')) || {};
     const role = activeUser.position || 'Guest';
-    const canImport = !['Employee', 'Staff', 'Guest'].includes(role);
+    const canImport = !['Employee', 'Guest'].includes(role);
     
     if ($(`#${containerId}`).length === 0) {
         let html = `<div id="${containerId}" class="d-flex gap-1 border-end pe-2 border-secondary-subtle"></div>`;
         
         if (importType && canImport) {
-            html += `
-            <div class="d-flex gap-1 border-end pe-2 border-secondary-subtle">
-                <input type="file" id="importFile_${importType}" accept=".csv" style="display:none;" onchange="processImport(event, '${importType}')">
-                <button class="btn btn-sm btn-light border shadow-sm text-primary" title="Import CSV" onclick="document.getElementById('importFile_${importType}').click()">
-                    <i class="fa-solid fa-file-import"></i>
-                </button>
-            </div>`;
+            // NEW: If we are on the Purchase Requests table, inject the Appendix 60 XLSX button
+            if (importType === 'purchase') {
+                html += `
+                <div class="d-flex gap-1 border-end pe-2 border-secondary-subtle">
+                    <input type="file" id="xlsxFileInput" accept=".xlsx" style="display:none;" onchange="handleXlsxUpload(event)">
+                    <button class="btn btn-sm btn-success border shadow-sm" title="Import Excel" onclick="document.getElementById('xlsxFileInput').click()">
+                        <i class="fa-solid fa-file-import"></i>
+                    </button>
+                </div>`;
+            } 
+
+            else {
+                html += `
+                <div class="d-flex gap-1 border-end pe-2 border-secondary-subtle">
+                    <input type="file" id="importFile_${importType}" accept=".csv" style="display:none;" onchange="processImport(event, '${importType}')">
+                    <button class="btn btn-sm btn-light border shadow-sm text-primary" title="Import CSV" onclick="document.getElementById('importFile_${importType}').click()">
+                        <i class="fa-solid fa-file-import"></i>
+                    </button>
+                </div>`;
+            }
         }
         header.prepend(html);
     }
@@ -1005,19 +1032,19 @@ async function loadDashboardData(isBackgroundRefresh = false) {
             });
         }
 
-        populateFeed('dashActivityFeed', statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 3), (s) => `
+        populateFeed('dashActivityFeed', statuses.sort((a, b) => b.assignedID - a.assignedID).slice(0, 10), (s) => `
             <td class="fw-bold border-0" style="font-size: 13px;">${formatLongText(s.itemName)}</td>
             <td class="border-0" style="font-size: 13px;"><i class="fa-solid fa-user text-muted me-1"></i> ${s.personnelName}</td>
             <td class="text-muted border-0" style="font-size: 12px;">${new Date(s.dateAwarded).toLocaleDateString()}</td>
         `, 'No assignments found.');
 
-        populateFeed('dashRecentPRs', [...prs].sort((a, b) => b.prNum - a.prNum).slice(0, 3), (p) => `
+        populateFeed('dashRecentPRs', [...prs].sort((a, b) => b.prNum - a.prNum).slice(0, 10), (p) => `
             <td class="fw-bold border-0" style="font-size: 13px;">${p.prNum}</td>
             <td class="text-muted border-0" style="font-size: 12px;">${new Date(p.prDate).toLocaleDateString()}</td>
             <td class="border-0" style="font-size: 13px;">${formatLongText(p.prDescription)}</td>
         `, 'No PRs found.');
 
-        populateFeed('dashRecentItems', [...items].sort((a, b) => new Date(b.dateChecked) - new Date(a.dateChecked)).slice(0, 4), (i) => `
+        populateFeed('dashRecentItems', [...items].sort((a, b) => new Date(b.dateChecked) - new Date(a.dateChecked)).slice(0, 10), (i) => `
             <td class="fw-bold border-0" style="font-size: 13px;">${i.itemSerial}</td>
             <td class="border-0" style="font-size: 13px;">${formatLongText(i.itemName)}</td>
             <td class="border-0">${getStatusBadge(i.itemStatus)}</td>
@@ -1889,5 +1916,48 @@ async function submitForceReset() {
         showNotification(error.message, "error");
     } finally {
         btnSubmit.textContent = originalText; btnSubmit.disabled = false;
+    }
+}
+
+// ==========================================
+// IMPORT XLSX FEATURE
+// ==========================================
+async function handleXlsxUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    event.target.value = ''; 
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const token = localStorage.getItem('jwtToken');
+        
+        showNotification("Parsing Excel file. This might take a moment...", "info");
+
+        const response = await fetch(`${API_BASE_URL}/PurchaseRequests/import-xlsx`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}` 
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.message || "Failed to import Excel file.");
+
+        showNotification(data.message, "success");
+        
+        if (typeof loadPurchaseRequests === "function") {
+            loadPurchaseRequests();
+        } else {
+            setTimeout(() => window.location.reload(), 1500);
+        }
+
+    } catch (error) {
+        showNotification(error.message, "error");
+        console.error("Import Error:", error);
     }
 }
