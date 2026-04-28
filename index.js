@@ -30,6 +30,13 @@ async function apiFetch(endpoint, method = 'GET', body = null) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
 
     if (!response.ok) {
+        if (response.status === 401) {
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('activeUser');
+            alert("Your session has expired or you have logged in from another device. Please log in again.");
+            window.location.href = "log.html";
+            return;
+        }
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.message || `Server Error: ${response.status}`);
     }
