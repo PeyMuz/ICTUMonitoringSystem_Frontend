@@ -1113,7 +1113,8 @@ function openModal(actionType) {
     const descField = document.getElementById('modalDescField');
     const saveBtn = document.getElementById('btnSaveModal');
     const cancelBtn = document.getElementById('btnCancelModal');
-    const legacyCheck = document.getElementById('modalLegacyCheck'); 
+    const receiveBtn = document.getElementById('btnReceiveModal');
+    const legacyCheck = document.getElementById('modalLegacyCheck');
 
     prField.readOnly = false; 
     dateField.readOnly = false; 
@@ -1127,7 +1128,7 @@ function openModal(actionType) {
         prField.value = ""; dateField.value = ""; descField.value = "";
         document.getElementById('legacyCheckContainer').style.display = 'block';
         if (legacyCheck) legacyCheck.checked = false;
-        
+        if (receiveBtn) receiveBtn.style.display = 'none';
         saveBtn.textContent = "Save"; saveBtn.className = "btn btn-modern btn-success px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         
@@ -1143,7 +1144,7 @@ function openModal(actionType) {
         dateField.readOnly = false; 
         descField.readOnly = false;
         if (legacyCheck) legacyCheck.disabled = true;
-        
+        if (receiveBtn) receiveBtn.style.display = 'block';
         saveBtn.textContent = "Save Changes"; saveBtn.className = "btn btn-modern btn-success px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-danger px-4";
         
@@ -1159,7 +1160,7 @@ function openModal(actionType) {
         dateField.readOnly = true; 
         descField.readOnly = true;
         if (legacyCheck) legacyCheck.disabled = true;
-        
+        if (receiveBtn) receiveBtn.style.display = 'none';
         saveBtn.textContent = "Delete"; saveBtn.className = "btn btn-modern btn-danger px-4";
         cancelBtn.textContent = "Cancel"; cancelBtn.className = "btn btn-modern btn-secondary px-4";
     }
@@ -1959,5 +1960,41 @@ async function handleXlsxUpload(event) {
     } catch (error) {
         showNotification(error.message, "error");
         console.error("Import Error:", error);
+    }
+}
+
+// ==========================================
+// RECEIVE PENDING DELIVERY FEATURE (MODAL)
+// ==========================================
+async function receiveDelivery() {
+    // Grab the PR Number directly from the modal's read-only input field
+    const prInput = document.getElementById('modalPrField').value;
+    if (!prInput) return;
+
+    if (!confirm(`Are you sure you want to mark all pending items for PR #${prInput} as received and 'Working'?`)) {
+        return;
+    }
+
+    const receiveBtn = document.getElementById('btnReceiveModal');
+    const originalText = receiveBtn.innerHTML;
+    
+    // Add a loading spinner to the button
+    receiveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Receiving...';
+    receiveBtn.disabled = true;
+
+    try {
+        const response = await apiFetch(`/Inventory/receive/${prInput}`, 'PATCH');
+        
+        showNotification(response.message, "success");
+        
+        // Close the modal upon success
+        closeModal();
+
+    } catch (error) {
+        showNotification(error.message, "error");
+    } finally {
+        // Reset the button state in case the modal is opened again or it failed
+        receiveBtn.innerHTML = originalText;
+        receiveBtn.disabled = false;
     }
 }
