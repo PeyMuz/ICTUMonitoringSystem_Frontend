@@ -5,7 +5,7 @@
 /* ============================================================== */
 /* 1. GLOBAL CONFIG & STATE MEMORY                                */
 /* ============================================================== */
-const API_BASE_URL = "https://localhost:7040/api";
+const API_BASE_URL = "http://localhost:8080/api";
 let selectedPRData = null;
 let selectedItemData = null;
 let selectedMonData = null;
